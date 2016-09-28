@@ -1,0 +1,53 @@
+package castboard.dataaccess;
+
+import java.sql.DriverManager;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+public class InterfaceDAL
+{
+	private Connection connection ;
+	private static InterfaceDAL instance = null;
+	
+	private static final String DB_NAME = "CastBoardDB";
+	
+	private InterfaceDAL () 
+	{
+		connection = null;
+	}
+	
+	public static InterfaceDAL getInstance ()
+	{
+		if (instance == null)
+			instance = new InterfaceDAL();
+			
+		return instance;
+	}
+	
+	public boolean connect (String user, String pass)
+	{
+		String url = "jdbc:derby://localhost:1527/.databases/" +
+						 DB_NAME + ";user=" + user + ";password=" + 
+						 pass + ";bootPassword=Un1v3rs3K3y;ssl=basic";
+		
+		try
+		{
+			DriverManager.registerDriver(new org.apache.derby.jdbc.ClientDriver());
+			//Class.forName("org.apache.derby.jdbc.ClientDriver").newInstance();
+			connection = DriverManager.getConnection(url);
+		}
+		catch (SQLException e)
+		{
+			//TODO: Notify controller
+			
+			e.printStackTrace();
+		}
+		finally
+		{
+			if(connection != null)
+				return true;
+			else
+				return false;
+		}
+	}
+}

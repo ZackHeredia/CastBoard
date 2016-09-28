@@ -1,0 +1,14 @@
+package castboard;
+
+import javax.swing.JFrame;
+import castboard.view.MasterFrame;
+
+public class Skeleton0
+{
+	public static void main(String[] args) 
+	{
+		JFrame masterFrame = new MasterFrame();
+		masterFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		masterFrame.setVisible(true);
+	}
+}

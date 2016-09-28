@@ -1,0 +1,16 @@
+package castboard.domain;
+
+import castboard.dataaccess.InterfaceDAL;
+
+public abstract class CatalogsHandler
+{
+	public static boolean connect(String user, String pass)
+	{
+		getInterfaceDAL().connect(user, pass);
+	}
+	
+	private static InterfaceDAL getInterfaceDAL()
+	{
+		return InterfaceDAL.getInstance();
+	}
+}

@@ -1,0 +1,36 @@
+package castboard.view;
+
+import javax.swing.JOptionPane;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.ImageIcon;
+
+public class PetitionPopUp
+{
+	private JFrame frmParent;
+	private JPanel pnlForm;
+	
+	public PetitionPopUp (JFrame frmParent, JPanel pnlForm)
+	{
+		this.frmParent = frmParent;
+		this.pnlForm = pnlForm;
+	}
+	
+	public void display ()
+	{
+			String title = "Petición - CastBoard";
+			ImageIcon icon = new ImageIcon("castboard/res/icons/" + 
+														"ico_64_cb.png");
+														
+			int option = JOptionPane.showConfirmDialog
+							 (
+								 frmParent,
+								 pnlForm,
+								 title,
+								 JOptionPane.OK_CANCEL_OPTION,
+								 JOptionPane.PLAIN_MESSAGE,
+								 icon
+							 );
+	}
+	
+}
