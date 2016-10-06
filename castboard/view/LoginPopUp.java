@@ -9,6 +9,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JPasswordField;
+import javax.swing.SwingWorker;
 import java.awt.BorderLayout;
 
 public class LoginPopUp extends PopUp
@@ -44,16 +45,8 @@ public class LoginPopUp extends PopUp
 				(new CautionPopUp(frmParent)).display("'Agente' y 'Contraseña' deben ser ingresados");
 				display();
 			}
-			else if (CatalogsHandler.connect(user, pass))
-				((MasterFrame) frmParent).logIn();
 			else
-			{
-				(new FailureNotificationPopUp(frmParent)).display("Lo sentimos, no se ha podido " +
-																  "establecer conexion.\nRevise su" +
-																  " 'Agente' y 'Contraseña', si el " +
-																  "problema\npersiste contacte al DBA");
-				display();
-			}
+				connect(user, pass);
 		}
 		else if (option == JOptionPane.CANCEL_OPTION)
 		{
@@ -88,5 +81,38 @@ public class LoginPopUp extends PopUp
 		pnlForm.add(pnlPass, BorderLayout.SOUTH);
 		
 		txtAgent.requestFocus();
+	}
+
+	private void connect (String user, String pass)
+	{
+		SwingWorker worker = new SwingWorker<Void, Void>()
+		{
+			boolean isConnect;
+
+			protected Void doInBackground ()
+			{
+				isConnect = CatalogsHandler.connect(user, pass);
+
+				return null;
+			}
+			protected void done ()
+			{
+				((MasterFrame) frmParent).stopWaitingLayer();
+
+				if (isConnect)
+					((MasterFrame) frmParent).logIn();
+				else
+				{
+					(new FailureNotificationPopUp(frmParent)).display("Lo sentimos, no se ha podido " +
+																	  "establecer conexion.\nRevise su" +
+																	  " 'Agente' y 'Contraseña', si el " +
+																	  "problema\npersiste contacte al DBA");
+					display();
+				}
+			}
+		};
+		worker.execute();
+
+		((MasterFrame) frmParent).startWaitingLayer();
 	}
 }

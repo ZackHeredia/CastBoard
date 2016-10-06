@@ -13,6 +13,7 @@ import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.border.Border;
+import javax.swing.SwingWorker;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
@@ -27,15 +28,32 @@ public class FrontWindow extends JPanel
 	public FrontWindow ()
 	{
 		masterFrame = MasterFrame.getInstance();
+		FrontWindow front = this;
 
-		createPnlProject();
-		createPnlTalent();
+		SwingWorker worker = new SwingWorker<Void, Void>()
+		{
 
-		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+			protected Void doInBackground ()
+			{
+				createPnlProject();
+				createPnlTalent();
 
-		this.add(pnlProject);
-		this.add(Box.createVerticalGlue());
-		this.add(pnlTalent);
+				return null;
+			}
+			protected void done ()
+			{
+				masterFrame.stopWaitingLayer();
+
+				front.setLayout(new BoxLayout(front, BoxLayout.Y_AXIS));
+
+				front.add(pnlProject);
+				front.add(Box.createVerticalGlue());
+				front.add(pnlTalent);
+			}
+		};
+		worker.execute();
+
+		masterFrame.startWaitingLayer();
 	}
 
 	private void createPnlProject ()
