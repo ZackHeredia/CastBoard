@@ -27,11 +27,13 @@ public class LoginPopUp extends PopUp
 	
 	public void display ()
 	{
-			super.display(pnlForm);
+		txtPass.setText("");
+		
+		super.display(pnlForm);
 	}
 
 	public void optionSelected (int option)
-	{
+	{		
 		if (option == JOptionPane.OK_OPTION)
 		{
 			String user = txtAgent.getText();
@@ -73,6 +75,9 @@ public class LoginPopUp extends PopUp
 		
 		pnlForm = new JPanel();
 		pnlForm.setLayout(new BorderLayout());
+
+		txtAgent.setToolTipText("Entre su 'Agente', ej: JLopez");
+		txtPass.setToolTipText("Entre su 'Contraseña', min. 8 caracteres alfanumericos camellados");
 		
 		pnlAgent.add(lblAgent);
 		pnlAgent.add(txtAgent);
@@ -81,5 +86,7 @@ public class LoginPopUp extends PopUp
 		
 		pnlForm.add(pnlAgent, BorderLayout.NORTH);
 		pnlForm.add(pnlPass, BorderLayout.SOUTH);
+		
+		txtAgent.requestFocus();
 	}
 }
