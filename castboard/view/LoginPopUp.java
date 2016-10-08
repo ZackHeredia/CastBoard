@@ -46,7 +46,7 @@ public class LoginPopUp extends PopUp
 				display();
 			}
 			else
-				connect(user, pass);
+				login(user, pass);
 		}
 		else if (option == JOptionPane.CANCEL_OPTION)
 		{
@@ -83,7 +83,7 @@ public class LoginPopUp extends PopUp
 		txtAgent.requestFocus();
 	}
 
-	private void connect (String user, String pass)
+	private void login (String user, String pass)
 	{
 		SwingWorker worker = new SwingWorker<Void, Void>()
 		{

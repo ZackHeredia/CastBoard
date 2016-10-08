@@ -180,7 +180,7 @@ public class MasterFrame extends JFrame
 				if (isConnected)
 					{}//TODO call talent search window}
 				else
-					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder a la" +
+					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder a la " +
 														   "búsqueda");
 			}
 		});
@@ -191,7 +191,7 @@ public class MasterFrame extends JFrame
 				if (isConnected)
 					{}//TODO call project search window
 				else
-					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder a la" + 
+					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder a la " + 
 														   "búsqueda");
 			}
 		});
@@ -244,23 +244,48 @@ public class MasterFrame extends JFrame
 				if (links.size() > 1)
 				{
 					JLabel lblLink = (JLabel) e.getSource();
-					String windowTitle = lblLink.getText();
+					String windowTitle = lblLink.getText().substring(2);
 					CardLayout lytCard = (CardLayout) pnlBody.getLayout();
 
-					lblLink.setToolTipText("Regresar a " + link);
-
 					lytCard.show(pnlBody, windowTitle);
+					getInstance().setTitle(windowTitle + " - CastBoard");
+
+					unstyleLink(lblLink);
+
 					popWindows(windows.get(links.indexOf(lblLink)));
 					popLblLinks(lblLink);
 				}
 			}
+
+			public void mouseEntered (MouseEvent e)
+			{
+				JLabel lblLink = (JLabel) e.getSource();
+				String windowTitle = lblLink.getText().substring(2);
+
+				if(lblLink != links.get(links.size() - 1))
+						lblLink.setToolTipText("Regresar a " + windowTitle);
+
+				if(lblLink != links.get(links.size() - 1))
+					lblLink.setForeground(new Color(210, 210, 210));
+			}
+
+			public void mouseExited (MouseEvent e)
+			{
+				JLabel lblLink = (JLabel) e.getSource();
+
+				if(lblLink != links.get(links.size() - 1))
+					lblLink.setForeground(new Color(0, 146, 182));
+			}
 		});
 		
 		if (!(links.isEmpty()))
-			styleLink(links.get(links.size()));
+			styleLink(links.get(links.size() - 1));
 
 		links.add(lblLink);
 		tlbNavigation.add(lblLink);
+
+		tlbNavigation.revalidate();
+		this.repaint();
 	}
 	public void popLblLinks (JLabel lblLink)
 	{
@@ -273,6 +298,9 @@ public class MasterFrame extends JFrame
 			tlbNavigation.remove(popLinks.get(i));
 		}
 		links.removeAll(popLinks);
+
+		tlbNavigation.revalidate();
+		this.repaint();
 	}
 	@SuppressWarnings("unchecked")
 	public void styleLink (JLabel link)
@@ -283,6 +311,16 @@ public class MasterFrame extends JFrame
 		link.setFont(font.deriveFont(attributes));
 
 		link.setForeground(new Color(0, 146, 182));
+	}
+	@SuppressWarnings("unchecked")
+	public void unstyleLink (JLabel link)
+	{
+		Font font = link.getFont();
+		Map attributes = font.getAttributes();
+		attributes.put(TextAttribute.UNDERLINE, (-1));
+		link.setFont(font.deriveFont(attributes));
+
+		link.setForeground(Color.BLACK);
 	}
 
 	public void popWindows (JPanel window)
@@ -315,6 +353,7 @@ public class MasterFrame extends JFrame
 			CatalogsHandler.disconnect();
 			isConnected = false;
 			mnbActions.getMenu(4).setText("Iniciar sesión");
+			this.setTitle("CastBoard");
 			displayBlank();
 			(new SuccessNotificationPopUp(this)).display("¡La sesión ha sido cerrada!");
 			displayLogin();
@@ -362,13 +401,47 @@ public class MasterFrame extends JFrame
 		links.clear();
 		windows.clear();
 	}
-	public void displayProjectSet ()
-	{
-
-	}
 	public void displayTalentSet ()
 	{
+		TalentSetWindow talentSet;
+		String title;
+		CardLayout lytCard;
 
+		if (isConnected)
+		{
+			talentSet = new TalentSetWindow();
+			title = "Catálogo de Talentos";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(talentSet, title);
+			windows.add(talentSet);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayProjectSet ()
+	{
+		ProjectSetWindow projectSet;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			projectSet = new ProjectSetWindow();
+			title = "Catálogo de Proyectos";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(projectSet, title);
+			windows.add(projectSet);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
 	}
 	public void displayException (String message)
 	{
@@ -518,10 +591,14 @@ public class MasterFrame extends JFrame
 			{	
 				CatalogsHandler.disconnect();
 				getInstance().dispose();
+				System.exit(0);
 			}
 		}
 		else
+		{
 			getInstance().dispose();
+			System.exit(0);
+		}
 	}
 
 	/*

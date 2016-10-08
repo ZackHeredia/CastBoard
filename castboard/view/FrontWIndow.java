@@ -17,6 +17,7 @@ import javax.swing.SwingWorker;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
+import java.awt.Color;
 import java.util.ArrayList;
 
 public class FrontWindow extends JPanel
@@ -76,6 +77,20 @@ public class FrontWindow extends JPanel
 			{
 				masterFrame.displayProjectSet();
 			}
+
+			public void mouseEntered (MouseEvent e)
+			{
+				JLabel lblLink = (JLabel) e.getSource();
+
+				lblLink.setForeground(new Color(210, 210, 210));
+			}
+
+			public void mouseExited (MouseEvent e)
+			{
+				JLabel lblLink = (JLabel) e.getSource();
+
+				lblLink.setForeground(new Color(0, 146, 182));
+			}
 		});
 		masterFrame.styleLink(lblLink);
 
@@ -97,7 +112,7 @@ public class FrontWindow extends JPanel
 		{
 			for (int i = counter; i < 5; i++)
 			{
-				pnlGrid.add(Box.createRigidArea(new Dimension(132, 140)));
+				pnlGrid.add(Box.createRigidArea(new Dimension(132, 196)));
 			}
 		}
 
@@ -127,6 +142,20 @@ public class FrontWindow extends JPanel
 			{
 				masterFrame.displayTalentSet();
 			}
+
+			public void mouseEntered (MouseEvent e)
+			{
+				JLabel lblLink = (JLabel) e.getSource();
+
+				lblLink.setForeground(new Color(210, 210, 210));
+			}
+
+			public void mouseExited (MouseEvent e)
+			{
+				JLabel lblLink = (JLabel) e.getSource();
+
+				lblLink.setForeground(new Color(0, 146, 182));
+			}
 		});
 		masterFrame.styleLink(lblLink);
 
@@ -150,7 +179,7 @@ public class FrontWindow extends JPanel
 		{
 			for (int i = counter; i < 15; i++)
 			{
-				pnlGrid.add(Box.createRigidArea(new Dimension(132, 140)));
+				pnlGrid.add(Box.createRigidArea(new Dimension(132, 196)));
 			}
 		}
 
