@@ -5,7 +5,16 @@ import static castboard.domain.Enumeration.*;
 import castboard.dataaccess.InterfaceDAL;
 import castboard.view.MasterFrame;
 import java.util.ArrayList;
+import java.util.TreeMap;
+import java.util.Map.Entry;
 import java.util.Date;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.InputStream;
+import java.io.IOException;
 
 public abstract class CatalogsHandler
 {
@@ -24,7 +33,7 @@ public abstract class CatalogsHandler
 
 	public static ArrayList<ArrayList<String>> getSet (int setType)
 	{
-		ArrayList<ArrayList<String>> set;
+		ArrayList<ArrayList<String>> set = null;
 
 		switch (setType)
 		{
@@ -71,6 +80,8 @@ public abstract class CatalogsHandler
 		int separator = items.indexOf(null);
 		ArrayList<ArrayList<String>> set = new ArrayList<ArrayList<String>>();
 		ArrayList<String> inner;
+		Project projectThumbnail;
+		Talent talentThumbnail;
 
 		for (int i = 0; i < items.size(); i++)
 		{
@@ -78,11 +89,13 @@ public abstract class CatalogsHandler
 
 			if (i < separator)
 			{
-				inner.add(Long.toString(((Project) items.get(i)).getId()));
-				inner.add(((Project) items.get(i)).getTitle());
-				inner.add(((Project) items.get(i)).getType().toString());
-				inner.add(((Project) items.get(i)).getProducer());
-				inner.add(((Project) items.get(i)).getState().toString());
+				projectThumbnail = (Project) items.get(i);
+
+				inner.add(Long.toString(projectThumbnail.getId()));
+				inner.add(projectThumbnail.getTitle());
+				inner.add(projectThumbnail.getType().toString());
+				inner.add(projectThumbnail.getProducer());
+				inner.add(projectThumbnail.getState().toString());
 
 				set.add(inner);
 			}
@@ -90,11 +103,13 @@ public abstract class CatalogsHandler
 				set.add(null);
 			else
 			{
-				inner.add(Long.toString(((Talent) items.get(i)).getId()));
-				//inner.add(parse(((Talent) items.get(i)).getPhotos()));
-				inner.add(((Talent) items.get(i)).getName());
-				inner.add(parse(((Talent) items.get(i)).getBirthdate()));
-				inner.add(((Talent) items.get(i)).getProfileType().toString());
+				talentThumbnail = (Talent) items.get(i);
+
+				inner.add(Long.toString(talentThumbnail.getId()));
+				inner.add(parse(talentThumbnail.getPhotos(), talentThumbnail.getId())[0]);
+				inner.add(talentThumbnail.getName());
+				inner.add(parse(talentThumbnail.getBirthdate()));
+				inner.add(talentThumbnail.getProfileType().toString());
 
 				set.add(inner);
 			}
@@ -112,12 +127,13 @@ public abstract class CatalogsHandler
 		for (int i = 0; i < items.size(); i++)
 		{
 			inner = new ArrayList<String>();
+			thumbnail = (Talent) items.get(i);
 
-			inner.add(Long.toString(((Talent) items.get(i)).getId()));
-			//inner.add(parse(((Talent) items.get(i)).getPhotos()));
-			inner.add(((Talent) items.get(i)).getName());
-			inner.add(parse(((Talent) items.get(i)).getBirthdate()));
-			inner.add(((Talent) items.get(i)).getProfileType().toString());
+			inner.add(Long.toString(thumbnail.getId()));
+			inner.add(parse(thumbnail.getPhotos(), thumbnail.getId())[0]);
+			inner.add(thumbnail.getName());
+			inner.add(parse(thumbnail.getBirthdate()));
+			inner.add(thumbnail.getProfileType().toString());
 
 			set.add(inner);
 		}
@@ -133,13 +149,14 @@ public abstract class CatalogsHandler
 
 		for (int i = 0; i < items.size(); i++)
 		{
-			inner = new ArrayList<String>();
+			inner = new ArrayList<String>(); 
+			thumbnail = (Project) items.get(i);
 
-			inner.add(Long.toString(((Project) items.get(i)).getId()));
-			inner.add(((Project) items.get(i)).getTitle());
-			inner.add(((Project) items.get(i)).getType().toString());
-			inner.add(((Project) items.get(i)).getProducer());
-			inner.add(((Project) items.get(i)).getState().toString());
+			inner.add(Long.toString(thumbnail.getId()));
+			inner.add(thumbnail.getTitle());
+			inner.add(thumbnail.getType().toString());
+			inner.add(thumbnail.getProducer());
+			inner.add(thumbnail.getState().toString());
 
 			set.add(inner);
 		}
@@ -153,5 +170,64 @@ public abstract class CatalogsHandler
 		int age = ((new Date()).getYear() + 1900) - (birthdate.getYear() + 1900);
 
 		return Integer.toString(age);
+	}
+	public static InputStream parse (BufferedImage photo)
+	{
+
+		ByteArrayOutputStream baOutputStream = new ByteArrayOutputStream();
+
+		try
+		{
+			ImageIO.write(photo,"jpg", baOutputStream);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+
+		byte[] bytes = baOutputStream.toByteArray();
+
+		return new ByteArrayInputStream(bytes);
+	}
+	public static TreeMap<String, BufferedImage> parse (InputStream inputStream)
+	{
+		TreeMap<String, BufferedImage> photos = new TreeMap<String, BufferedImage>();
+		
+		try
+		{
+			photos.put("Rostro", ImageIO.read(inputStream));
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+
+		return photos;
+	}
+	public static String[] parse (TreeMap<String, BufferedImage> photos, long id)
+	{
+		String[] photosPath = new String[photos.size()];
+		File photoFile;
+		int i = 0;
+
+		try
+		{
+			for (Entry<String, BufferedImage> photo : photos.entrySet())
+			{
+				photoFile = File.createTempFile(photo.getKey() + id, ".jpg");
+				photoFile.deleteOnExit();
+
+				ImageIO.write(photo.getValue(), "jpg", photoFile);
+
+				photosPath[i] = photoFile.getAbsolutePath();
+				i++;
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+
+		return photosPath;
 	}
 }

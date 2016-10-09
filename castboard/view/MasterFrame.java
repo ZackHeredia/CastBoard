@@ -41,6 +41,7 @@ import java.awt.font.TextAttribute;
 import java.awt.Component;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Map;
 import java.beans.PropertyChangeEvent;
@@ -515,7 +516,8 @@ public class MasterFrame extends JFrame
 	{
 		ArrayList<JButton> thumbnails = new ArrayList<JButton>();
 		JButton thumbnail;
-		JPanel photo;//TODO photo code
+		JPanel photoWrapper;
+		JLabel photo;
 		JPanel list;
 		JLabel name;
 		JLabel age;
@@ -527,32 +529,38 @@ public class MasterFrame extends JFrame
 			thumbnail.setLayout(new BoxLayout(thumbnail, BoxLayout.Y_AXIS));
 			thumbnail.setPreferredSize(new Dimension(132, 196));
 
-			photo = new JPanel();
-			photo.setBorder(BorderFactory.createLineBorder(Color.black));
-			photo.setBackground(new Color(210, 210, 210));
+			photoWrapper = new JPanel();
+			photoWrapper.setLayout(new BorderLayout());
+			photoWrapper.setPreferredSize(new Dimension(128, 128));
+			photoWrapper.setBorder(BorderFactory.createLineBorder(Color.black));
+			photoWrapper.setBackground(new Color(210, 210, 210));
 
 			list = new JPanel();
 			list.setLayout(new BorderLayout());
 			list.setOpaque(false);
 
 			thumbnail.setName(talent.get(0));
-			name = new JLabel("\u2022 " + talent.get(1));
-			age = new JLabel("\u2022 " + talent.get(2));
-			profileType = new JLabel("\u2022 " + talent.get(3));
+			photo = new JLabel(new ImageIcon(((new ImageIcon(talent.get(1)).getImage().
+											   getScaledInstance(128, 128, Image.SCALE_SMOOTH)))));
+			name = new JLabel("\u2022 " + talent.get(2));
+			age = new JLabel("\u2022 " + talent.get(3));
+			profileType = new JLabel("\u2022 " + talent.get(4));
 
 			thumbnail.setToolTipText("Ver detalle del talento");
-			photo.setToolTipText("Foto");
+			photoWrapper.setToolTipText("Foto");
 			name.setToolTipText("Nombre");
 			age.setToolTipText("Edad");
 			profileType.setToolTipText("Tipo de perfil");
 
-			photo.add(Box.createRigidArea(new Dimension(128, 128)));
+			//photoWrapper.add(Box.createRigidArea(new Dimension(128, 128)));
+			//photo.setPreferredSize(new Dimension(128, 128));
+			photoWrapper.add(photo);
 
 			list.add(name, BorderLayout.NORTH);
 			list.add(age, BorderLayout.CENTER);
 			list.add(profileType, BorderLayout.SOUTH);
 
-			thumbnail.add(photo);
+			thumbnail.add(photoWrapper);
 			thumbnail.add(list);
 
 			thumbnail.addActionListener(new ActionListener()

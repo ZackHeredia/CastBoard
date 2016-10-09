@@ -90,22 +90,22 @@ public class InterfaceDAL
 							  "FROM Projects AS p, Items AS i " +
 							  "WHERE p.id=i.id AND i.isSuppressed=false " +
 							  "ORDER BY i.creationDate DESC";
-		/*String queryStar = "SELECT t.id, tp.photo, t.name, t.birthdate, t.profileType " +
+		String queryStar = "SELECT t.id, tp.photo, t.name, t.birthdate, t.profileType " +
 							  "FROM Talents AS t, TalentsPhotos AS tp, Items AS i " +
-							  "WHERE t.id=i.id AND t.status='Estrella' AND (t.id=tp.talentId AND tp.name='Rostro') AND i.isSuppressed=false " +
-							  "ORDER BY i.creationDate DESC";
+							  "WHERE t.id=i.id AND t.status='Estrella' AND (t.id=tp.talentId AND " +
+							  "tp.name='Rostro') AND i.isSuppressed=false ORDER BY i.creationDate DESC";
 		 String queryTalent = "SELECT t.id, tp.photo, t.name, t.birthdate, t.profileType " +
 							  "FROM Talents AS t, TalentsPhotos AS tp, Items AS i " +
-							  "WHERE t.id=i.id AND t.status='Talento' AND (t.id=tp.talentId AND tp.name='Rostro') AND i.isSuppressed=false " +
-							  "ORDER BY i.creationDate DESC";*/
-		String queryStar = "SELECT t.id, t.name, t.birthdate, t.profileType " +
+							  "WHERE t.id=i.id AND t.status='Talento' AND (t.id=tp.talentId AND " +
+							  "tp.name='Rostro') AND i.isSuppressed=false ORDER BY i.creationDate DESC";
+		/*String queryStar = "SELECT t.id, t.name, t.birthdate, t.profileType " +
 							  "FROM Talents AS t, Items AS i " +
 							  "WHERE t.id=i.id AND t.status='Estrella' AND i.isSuppressed=false " +
 							  "ORDER BY i.creationDate DESC";
 		String queryTalent = "SELECT t.id, t.name, t.birthdate, t.profileType " +
 							  "FROM Talents AS t, Items AS i " +
 							  "WHERE t.id=i.id AND t.status='Talento' AND i.isSuppressed=false " +
-							  "ORDER BY i.creationDate DESC";
+							  "ORDER BY i.creationDate DESC";*/
 
 		try
 		{
@@ -134,9 +134,10 @@ public class InterfaceDAL
 				talent = new Talent();
 
 				talent.setId(result.getLong(1));
-				talent.setName(result.getString(2));
-				talent.setBirthdate(new java.util.Date(result.getDate(3).getTime()));
-				talent.setProfileType(ProfileType.identifierOf(result.getString(4)));
+				talent.setPhotos(CatalogsHandler.parse(result.getBlob(2).getBinaryStream()));
+				talent.setName(result.getString(3));
+				talent.setBirthdate(new java.util.Date(result.getDate(4).getTime()));
+				talent.setProfileType(ProfileType.identifierOf(result.getString(5)));
 
 				items.add(talent);
 			}
@@ -149,9 +150,10 @@ public class InterfaceDAL
 				talent = new Talent();
 
 				talent.setId(result.getLong(1));
-				talent.setName(result.getString(2));
-				talent.setBirthdate(new java.util.Date(result.getDate(3).getTime()));
-				talent.setProfileType(ProfileType.identifierOf(result.getString(4)));
+				talent.setPhotos(CatalogsHandler.parse(result.getBlob(2).getBinaryStream()));
+				talent.setName(result.getString(3));
+				talent.setBirthdate(new java.util.Date(result.getDate(4).getTime()));
+				talent.setProfileType(ProfileType.identifierOf(result.getString(5)));
 
 				items.add(talent);
 			}
@@ -176,22 +178,22 @@ public class InterfaceDAL
 
 		if (profile == null)
 		{
-			/*String queryStar = "SELECT t.id, tp.photo, t.name, t.birthdate, t.profileType " +
+			String queryStar = "SELECT t.id, tp.photo, t.name, t.birthdate, t.profileType " +
 								  "FROM Talents AS t, TalentsPhotos AS tp, Items AS i " +
-								  "WHERE t.id=i.id AND t.status='Estrella' AND (t.id=tp.talentId AND tp.name='Rostro') AND i.isSuppressed=false " +
-								  "ORDER BY i.creationDate DESC";
+								  "WHERE t.id=i.id AND t.status='Estrella' AND (t.id=tp.talentId AND" +
+								  " tp.name='Rostro') AND i.isSuppressed=false ORDER BY i.creationDate DESC";
 			String queryTalent = "SELECT t.id, tp.photo, t.name, t.birthdate, t.profileType " +
 								  "FROM Talents AS t, TalentsPhotos AS tp, Items AS i " +
-								  "WHERE t.id=i.id AND t.status='Talento' AND (t.id=tp.talentId AND tp.name='Rostro') AND i.isSuppressed=false " +
-								  "ORDER BY i.creationDate DESC";*/
-			String queryStar = "SELECT t.id, t.name, t.birthdate, t.profileType " +
+								  "WHERE t.id=i.id AND t.status='Talento' AND (t.id=tp.talentId AND " +
+								  "tp.name='Rostro') AND i.isSuppressed=false ORDER BY i.creationDate DESC";
+		/*	String queryStar = "SELECT t.id, t.name, t.birthdate, t.profileType " +
 								  "FROM Talents AS t, Items AS i " +
 								  "WHERE t.id=i.id AND t.status='Estrella' AND i.isSuppressed=false " +
 								  "ORDER BY i.creationDate DESC";
 			String queryTalent = "SELECT t.id, t.name, t.birthdate, t.profileType " +
 								  "FROM Talents AS t, Items AS i " +
 								  "WHERE t.id=i.id AND t.status='Talento' AND i.isSuppressed=false " +
-								  "ORDER BY i.creationDate DESC";
+								  "ORDER BY i.creationDate DESC";*/
 
 			try
 			{
@@ -203,9 +205,10 @@ public class InterfaceDAL
 					talent = new Talent();
 
 					talent.setId(result.getLong(1));
-					talent.setName(result.getString(2));
-					talent.setBirthdate(new java.util.Date(result.getDate(3).getTime()));
-					talent.setProfileType(ProfileType.identifierOf(result.getString(4)));
+					talent.setPhotos(CatalogsHandler.parse(result.getBlob(2).getBinaryStream()));
+					talent.setName(result.getString(3));
+					talent.setBirthdate(new java.util.Date(result.getDate(4).getTime()));
+					talent.setProfileType(ProfileType.identifierOf(result.getString(5)));
 
 					talents.add(talent);
 				}
@@ -217,9 +220,10 @@ public class InterfaceDAL
 					talent = new Talent();
 
 					talent.setId(result.getLong(1));
-					talent.setName(result.getString(2));
-					talent.setBirthdate(new java.util.Date(result.getDate(3).getTime()));
-					talent.setProfileType(ProfileType.identifierOf(result.getString(4)));
+					talent.setPhotos(CatalogsHandler.parse(result.getBlob(2).getBinaryStream()));
+					talent.setName(result.getString(3));
+					talent.setBirthdate(new java.util.Date(result.getDate(4).getTime()));
+					talent.setProfileType(ProfileType.identifierOf(result.getString(5)));
 
 					talents.add(talent);
 				}
