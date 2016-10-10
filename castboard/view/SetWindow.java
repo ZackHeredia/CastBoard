@@ -122,10 +122,10 @@ public abstract class SetWindow extends JPanel
 	{
 		if (indexAcum > 20)
 		{
-			if ((indexAcum % 20) != 0)
+			if ((indexAcum % 20) > 0)
 				indexAcum -= ((indexAcum % 20) + 20);
 			else
-				indexAcum -= 40;
+				indexAcum -= 20;
 
 			fillPnlGrid();
 		}

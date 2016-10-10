@@ -9,4 +9,5 @@ public class Skeleton0
 	{
 		JFrame masterFrame = MasterFrame.getInstance();
 		masterFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+	}
 }
