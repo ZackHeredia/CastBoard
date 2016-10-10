@@ -233,6 +233,94 @@ public class MasterFrame extends JFrame
 		pnlWrapper.add(lyrBody, BorderLayout.CENTER);
 		pnlWrapper.add(tlbNavigation, BorderLayout.PAGE_END);
 	}
+
+	public void displayLogin ()
+	{
+		if (!isConnected)
+			(new LoginPopUp(this)).display();
+	}
+	public void displayFront ()
+	{
+		FrontWindow front;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			front = new FrontWindow();
+			title = "Portada";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(front, title);
+			windows.add(front);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayBlank ()
+	{
+		for (int i = 0; i < windows.size(); i++)
+		{
+			pnlBody.remove(windows.get(i));
+			tlbNavigation.remove(links.get(i));
+		}
+
+		pnlBody.revalidate();
+		tlbNavigation.revalidate();
+		this.repaint();
+
+		links.clear();
+		windows.clear();
+	}
+	public void displayTalentSet ()
+	{
+		TalentSetWindow talentSet;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			talentSet = new TalentSetWindow();
+			title = "Catálogo de Talentos";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(talentSet, title);
+			windows.add(talentSet);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayProjectSet ()
+	{
+		ProjectSetWindow projectSet;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			projectSet = new ProjectSetWindow();
+			title = "Catálogo de Proyectos";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(projectSet, title);
+			windows.add(projectSet);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayException (String message)
+	{
+		(new ExceptionPopUp(this)).display(message);
+	}
 	
 	public void pushLblLink (String link)
 	{
@@ -359,94 +447,6 @@ public class MasterFrame extends JFrame
 			(new SuccessNotificationPopUp(this)).display("¡La sesión ha sido cerrada!");
 			displayLogin();
 		}
-	}
-	
-	public void displayLogin ()
-	{
-		if (!isConnected)
-			(new LoginPopUp(this)).display();
-	}
-	public void displayFront ()
-	{
-		FrontWindow front;
-		String title;
-		CardLayout lytCard;
-
-		if (isConnected)
-		{
-			front = new FrontWindow();
-			title = "Portada";
-			lytCard = (CardLayout) pnlBody.getLayout();
-
-			pnlBody.add(front, title);
-			windows.add(front);
-
-			lytCard.show(pnlBody, title);
-
-			pushLblLink(title);
-			this.setTitle(title + " - CastBoard");
-		}
-	}
-	public void displayBlank ()
-	{
-		for (int i = 0; i < windows.size(); i++)
-		{
-			pnlBody.remove(windows.get(i));
-			tlbNavigation.remove(links.get(i));
-		}
-
-		pnlBody.revalidate();
-		tlbNavigation.revalidate();
-		this.repaint();
-
-		links.clear();
-		windows.clear();
-	}
-	public void displayTalentSet ()
-	{
-		TalentSetWindow talentSet;
-		String title;
-		CardLayout lytCard;
-
-		if (isConnected)
-		{
-			talentSet = new TalentSetWindow();
-			title = "Catálogo de Talentos";
-			lytCard = (CardLayout) pnlBody.getLayout();
-
-			pnlBody.add(talentSet, title);
-			windows.add(talentSet);
-
-			lytCard.show(pnlBody, title);
-
-			pushLblLink(title);
-			this.setTitle(title + " - CastBoard");
-		}
-	}
-	public void displayProjectSet ()
-	{
-		ProjectSetWindow projectSet;
-		String title;
-		CardLayout lytCard;
-
-		if (isConnected)
-		{
-			projectSet = new ProjectSetWindow();
-			title = "Catálogo de Proyectos";
-			lytCard = (CardLayout) pnlBody.getLayout();
-
-			pnlBody.add(projectSet, title);
-			windows.add(projectSet);
-
-			lytCard.show(pnlBody, title);
-
-			pushLblLink(title);
-			this.setTitle(title + " - CastBoard");
-		}
-	}
-	public void displayException (String message)
-	{
-		(new ExceptionPopUp(this)).display(message);
 	}
 	
 	public void setIsConnected (boolean isConnected)
