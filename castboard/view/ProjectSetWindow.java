@@ -35,7 +35,7 @@ public class ProjectSetWindow extends SetWindow
 		masterFrame.startWaitingLayer();
 	}
 
-	public void createPnlGrid ()
+	protected void createPnlGrid ()
 	{
 		ArrayList<ArrayList<String>> projects = CatalogsHandler.getSet(CatalogsHandler.PROJECT_SET);
 		thumbnails = masterFrame.makeProjectThumbnails(projects);

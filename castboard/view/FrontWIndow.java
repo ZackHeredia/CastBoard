@@ -11,7 +11,6 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.border.Border;
 import javax.swing.SwingWorker;
 import java.awt.Dimension;

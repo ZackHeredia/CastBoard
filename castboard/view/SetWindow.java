@@ -25,6 +25,7 @@ public abstract class SetWindow extends JPanel
 	protected ArrayList<JButton> thumbnails;
 
 	protected int indexAcum;
+	protected final int THUMBNAIL_MAX = 20;
 
 	public SetWindow (String title)
 	{
@@ -37,14 +38,14 @@ public abstract class SetWindow extends JPanel
 		indexAcum = 0;
 	}
 
-	public void createPnlGrid ()
+	protected void createPnlGrid ()
 	{
 		pnlGrid = new JPanel();
 		pnlGrid.setLayout(new GridLayout(0, 5, 4, 4));
 
 		fillPnlGrid();
 	}
-	public void createPnlNavigation ()
+	protected void createPnlNavigation ()
 	{
 		BasicArrowButton btnBack = new BasicArrowButton(BasicArrowButton.WEST, (new Color(0, 146, 182)),
 																			   (new Color(0, 125, 156)),
@@ -83,7 +84,7 @@ public abstract class SetWindow extends JPanel
 		pnlNavigation.add(pnlButton);
 	}
 
-	public void fillPnlGrid ()
+	protected void fillPnlGrid ()
 	{
 		int counter = 0;
 
@@ -91,7 +92,7 @@ public abstract class SetWindow extends JPanel
 
 		try
 		{
-			for (int i = indexAcum; i < (indexAcum + 20); i++)
+			for (int i = indexAcum; i < (indexAcum + THUMBNAIL_MAX); i++)
 			{
 				pnlGrid.add(thumbnails.get(i));
 				counter++;
@@ -118,25 +119,32 @@ public abstract class SetWindow extends JPanel
 		}
 	}
 
-	public void goBack ()
+	protected void goBack ()
 	{
-		if (indexAcum > 20)
+		if (indexAcum > THUMBNAIL_MAX)
 		{
-			if ((indexAcum % 20) > 0)
-				indexAcum -= ((indexAcum % 20) + 20);
+			if ((indexAcum % THUMBNAIL_MAX) > 0)
+				indexAcum -= ((indexAcum % THUMBNAIL_MAX) + THUMBNAIL_MAX);
 			else
-				indexAcum -= 20;
+				indexAcum -= THUMBNAIL_MAX;
 
 			fillPnlGrid();
+			masterFrame.scrollTop();
 		}
 		else
 			(new FailureNotificationPopUp(masterFrame)).display("Ha llegado al principio del catálogo");
 	}
-	public void goForward ()
+	protected void goForward ()
 	{
 		if (indexAcum < thumbnails.size())
+		{
 			fillPnlGrid();
+			masterFrame.scrollTop();
+		}
 		else
 			(new FailureNotificationPopUp(masterFrame)).display("Ha llegado al final del catálogo");
 	}
+
+	public void createSet () {}
+	public boolean initThumbnails (ArrayList<String> args) {return false;}
 }

@@ -36,6 +36,7 @@ import java.awt.BasicStroke;
 import javax.swing.BorderFactory;
 import javax.swing.JLayer;
 import javax.swing.plaf.LayerUI;
+import javax.swing.JScrollBar;
 import java.awt.Font;
 import java.awt.font.TextAttribute;
 import java.awt.Component;
@@ -179,10 +180,30 @@ public class MasterFrame extends JFrame
 			public void actionPerformed (ActionEvent e)
 			{
 				if (isConnected)
-					{}//TODO call talent search window}
+				{
+					boolean isUnique = true;
+
+					for (JLabel lblLink : links)
+					{
+						if (lblLink.getText().equals(" \u25B8Búsqueda de Talentos"))
+						{
+							isUnique = false;
+							break;
+						}
+					}
+
+					if (isUnique)
+						displayTalentSearch();
+					else if (getInstance().getTitle().equals("Búsqueda de Talentos - CastBoard"))
+						(new CautionPopUp(getInstance())).display("Ya se encuentra en la búsqueda de " +
+																  "talentos");
+					else
+						(new CautionPopUp(getInstance())).display("Regrese a la búsqueda de talentos " + 
+																  "mediante la barra de navegación");
+				}
 				else
 					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder a la " +
-														   "búsqueda");
+														   	  "búsqueda");
 			}
 		});
 		mniProjectSearch.addActionListener(new ActionListener()
@@ -190,7 +211,27 @@ public class MasterFrame extends JFrame
 			public void actionPerformed (ActionEvent e)
 			{
 				if (isConnected)
-					{}//TODO call project search window
+				{
+					boolean isUnique = true;
+
+					for (JLabel lblLink : links)
+					{
+						if (lblLink.getText().equals(" \u25B8Búsqueda de Proyectos"))
+						{
+							isUnique = false;
+							break;
+						}
+					}
+
+					if (isUnique)
+						displayProjectSearch();
+					else if (getInstance().getTitle().equals("Búsqueda de Proyectos - CastBoard"))
+						(new CautionPopUp(getInstance())).display("Ya se encuentra en la búsqueda de " +
+																  "proyectos");
+					else
+						(new CautionPopUp(getInstance())).display("Regrese a la búsqueda de proyectos " +
+																  "mediante la barra de navegación");
+				}
 				else
 					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder a la " + 
 														   "búsqueda");
@@ -248,6 +289,7 @@ public class MasterFrame extends JFrame
 		if (isConnected)
 		{
 			front = new FrontWindow();
+			scrollTop();
 			title = "Portada";
 			lytCard = (CardLayout) pnlBody.getLayout();
 
@@ -284,6 +326,7 @@ public class MasterFrame extends JFrame
 		if (isConnected)
 		{
 			talentSet = new TalentSetWindow();
+			scrollTop();
 			title = "Catálogo de Talentos";
 			lytCard = (CardLayout) pnlBody.getLayout();
 
@@ -305,11 +348,56 @@ public class MasterFrame extends JFrame
 		if (isConnected)
 		{
 			projectSet = new ProjectSetWindow();
+			scrollTop();
 			title = "Catálogo de Proyectos";
 			lytCard = (CardLayout) pnlBody.getLayout();
 
 			pnlBody.add(projectSet, title);
 			windows.add(projectSet);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayTalentSearch ()
+	{
+		TalentSearchWindow talentSearch;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			talentSearch = new TalentSearchWindow();
+			scrollTop();
+			title = "Búsqueda de Talentos";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(talentSearch, title);
+			windows.add(talentSearch);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayProjectSearch ()
+	{
+		ProjectSearchWindow projectSearch;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			projectSearch = new ProjectSearchWindow();
+			scrollTop();
+			title = "Búsqueda de Proyectos";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(projectSearch, title);
+			windows.add(projectSearch);
 
 			lytCard.show(pnlBody, title);
 
@@ -325,56 +413,70 @@ public class MasterFrame extends JFrame
 	public void pushLblLink (String link)
 	{
 		JLabel lblLink = new JLabel(" \u25B8" + link);
+		boolean isUnique = true;
 
-		lblLink.addMouseListener(new MouseAdapter()
+		for (JLabel label : links)
 		{
-			public void mouseClicked (MouseEvent e)
+			if (lblLink.getText().equals(label.getText()))
 			{
-				if (links.size() > 1)
+				isUnique = false;
+				break;
+			}
+		}
+
+		if (isUnique)
+		{
+			lblLink.addMouseListener(new MouseAdapter()
+			{
+				public void mouseClicked (MouseEvent e)
+				{
+					if (links.size() > 1)
+					{
+						JLabel lblLink = (JLabel) e.getSource();
+						String windowTitle = lblLink.getText().substring(2);
+						CardLayout lytCard = (CardLayout) pnlBody.getLayout();
+
+						lytCard.show(pnlBody, windowTitle);
+						scrollTop();
+						getInstance().setTitle(windowTitle + " - CastBoard");
+
+						unstyleLink(lblLink);
+
+						popWindows(windows.get(links.indexOf(lblLink)));
+						popLblLinks(lblLink);
+					}
+				}
+
+				public void mouseEntered (MouseEvent e)
 				{
 					JLabel lblLink = (JLabel) e.getSource();
 					String windowTitle = lblLink.getText().substring(2);
-					CardLayout lytCard = (CardLayout) pnlBody.getLayout();
 
-					lytCard.show(pnlBody, windowTitle);
-					getInstance().setTitle(windowTitle + " - CastBoard");
+					if(lblLink != links.get(links.size() - 1))
+							lblLink.setToolTipText("Regresar a " + windowTitle);
 
-					unstyleLink(lblLink);
-
-					popWindows(windows.get(links.indexOf(lblLink)));
-					popLblLinks(lblLink);
+					if(lblLink != links.get(links.size() - 1))
+						lblLink.setForeground(new Color(210, 210, 210));
 				}
-			}
 
-			public void mouseEntered (MouseEvent e)
-			{
-				JLabel lblLink = (JLabel) e.getSource();
-				String windowTitle = lblLink.getText().substring(2);
+				public void mouseExited (MouseEvent e)
+				{
+					JLabel lblLink = (JLabel) e.getSource();
 
-				if(lblLink != links.get(links.size() - 1))
-						lblLink.setToolTipText("Regresar a " + windowTitle);
+					if(lblLink != links.get(links.size() - 1))
+						lblLink.setForeground(new Color(0, 146, 182));
+				}
+			});
+			
+			if (!(links.isEmpty()))
+				styleLink(links.get(links.size() - 1));
 
-				if(lblLink != links.get(links.size() - 1))
-					lblLink.setForeground(new Color(210, 210, 210));
-			}
+				links.add(lblLink);
+				tlbNavigation.add(lblLink);
 
-			public void mouseExited (MouseEvent e)
-			{
-				JLabel lblLink = (JLabel) e.getSource();
-
-				if(lblLink != links.get(links.size() - 1))
-					lblLink.setForeground(new Color(0, 146, 182));
-			}
-		});
-		
-		if (!(links.isEmpty()))
-			styleLink(links.get(links.size() - 1));
-
-		links.add(lblLink);
-		tlbNavigation.add(lblLink);
-
-		tlbNavigation.revalidate();
-		this.repaint();
+			tlbNavigation.revalidate();
+			this.repaint();
+		}
 	}
 	public void popLblLinks (JLabel lblLink)
 	{
@@ -540,8 +642,7 @@ public class MasterFrame extends JFrame
 			list.setOpaque(false);
 
 			thumbnail.setName(talent.get(0));
-			photo = new JLabel(new ImageIcon(((new ImageIcon(talent.get(1)).getImage().
-											   getScaledInstance(128, 128, Image.SCALE_SMOOTH)))));
+			photo = new JLabel(scale((new ImageIcon(talent.get(1))), 128, 128));
 			name = new JLabel("\u2022 " + talent.get(2));
 			age = new JLabel("\u2022 " + talent.get(3));
 			profileType = new JLabel("\u2022 " + talent.get(4));
@@ -576,6 +677,20 @@ public class MasterFrame extends JFrame
 		}
 
 		return thumbnails;
+	}
+
+	public void scrollTop ()
+	{
+		JScrollBar sclVertical = sclBody.getVerticalScrollBar();
+	    JScrollBar sclHorizontal = sclBody.getHorizontalScrollBar();
+
+	    sclVertical.setValue(sclVertical.getMinimum());
+	    sclHorizontal.setValue(sclHorizontal.getMinimum());
+	}
+
+	public ImageIcon scale (ImageIcon image, int height, int width)
+	{
+		return new ImageIcon((image.getImage().getScaledInstance(height, width, Image.SCALE_SMOOTH)));
 	}
 
 	public void startWaitingLayer ()

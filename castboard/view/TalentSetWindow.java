@@ -35,7 +35,7 @@ public class TalentSetWindow extends SetWindow
 		masterFrame.startWaitingLayer();
 	}
 
-	public void createPnlGrid ()
+	protected void createPnlGrid ()
 	{
 		ArrayList<ArrayList<String>> talents = CatalogsHandler.getSet(CatalogsHandler.TALENT_SET);
 		thumbnails = masterFrame.makeTalentThumbnails(talents);
