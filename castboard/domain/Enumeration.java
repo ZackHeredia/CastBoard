@@ -40,6 +40,9 @@ public abstract class Enumeration
 
 		public static Sex identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -81,6 +84,9 @@ public abstract class Enumeration
 
 		public static Physique identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -122,6 +128,9 @@ public abstract class Enumeration
 
 		public static SkinTone identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -162,6 +171,9 @@ public abstract class Enumeration
 
 		public static HairTexture identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -201,6 +213,9 @@ public abstract class Enumeration
 
 		public static ProfileType identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -242,6 +257,9 @@ public abstract class Enumeration
 
 		public static ShirtSize identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -280,6 +298,9 @@ public abstract class Enumeration
 
 		public static Status identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -319,6 +340,9 @@ public abstract class Enumeration
 
 		public static Type identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -360,6 +384,9 @@ public abstract class Enumeration
 
 		public static Category identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -399,6 +426,9 @@ public abstract class Enumeration
 
 		public static State identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -437,6 +467,9 @@ public abstract class Enumeration
 
 		public static LocationType identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}
@@ -476,6 +509,9 @@ public abstract class Enumeration
 
 		public static DayMoment identifierOf (String text)
 		{
+			if (text == null)
+				return null;
+			
 			return LOOKUP.get(text);
 		}
 	}

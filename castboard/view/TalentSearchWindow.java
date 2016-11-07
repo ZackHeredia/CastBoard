@@ -319,8 +319,6 @@ public class TalentSearchWindow extends JPanel
 				thumbnails = masterFrame.makeTalentThumbnails(talents);
 				indexAcum = 0;
 
-				System.out.println("initThumbnails");
-
 				return true;
 			}
 

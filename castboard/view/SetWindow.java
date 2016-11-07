@@ -8,7 +8,6 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
 import javax.swing.border.Border;
 import javax.swing.plaf.basic.BasicArrowButton;
 import java.awt.Dimension;
@@ -26,6 +25,7 @@ public abstract class SetWindow extends JPanel
 
 	protected int indexAcum;
 	protected final int THUMBNAIL_MAX = 20;
+	protected final int THUMBNAIL_COL = 5;
 
 	public SetWindow (String title)
 	{
@@ -41,7 +41,7 @@ public abstract class SetWindow extends JPanel
 	protected void createPnlGrid ()
 	{
 		pnlGrid = new JPanel();
-		pnlGrid.setLayout(new GridLayout(0, 5, 4, 4));
+		pnlGrid.setLayout(new GridLayout(0, THUMBNAIL_COL, 4, 4));
 
 		fillPnlGrid();
 	}
@@ -102,9 +102,9 @@ public abstract class SetWindow extends JPanel
 		{
 			e.printStackTrace(); 
 
-			if ((counter >= 1) && (counter % 5) != 0)
+			if ((counter >= 1) && (counter % THUMBNAIL_COL) != 0)
 			{
-				for (int i = counter; (i % 5) != 0; i++)
+				for (int i = counter; (i % THUMBNAIL_COL) != 0; i++)
 				{
 					pnlGrid.add(Box.createRigidArea(new Dimension(132, 196)));
 				}

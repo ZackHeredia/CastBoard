@@ -13,6 +13,8 @@ import java.sql.Types;
 import java.sql.SQLException;
 import java.sql.Date;
 import java.util.ArrayList;
+import java.util.TreeMap;
+import java.io.InputStream;
 
 public class InterfaceDAL
 {
@@ -424,6 +426,239 @@ public class InterfaceDAL
 		}	
 
 		return projects;
+	}
+
+	public Talent retrive (Talent thumbnail)
+	{
+		PreparedStatement statement;
+		ResultSet result;
+
+		String queryTalent = "SELECT * " +
+							 "FROM Talents AS t LEFT JOIN TalentsAddresses AS ta ON t.id=ta.talentId " +
+								  "LEFT JOIN TalentsVideos AS tv ON t.id=tv.talentId " +
+							 "WHERE t.id=?";
+		String queryNetwork = "SELECT * " +
+							  "FROM TalentsSocialNetworks AS tsn " +
+							  "WHERE tsn.talentId=?";
+		String queryPhone = "SELECT * " +
+							"FROM TalentsPhones AS tp " +
+							"WHERE tp.talentId=?";
+		String querySkills = "SELECT * " +
+							 "FROM TalentsArtisticSkills AS tas " +
+							 "WHERE tas.talentId=?";
+		String queryLanguages = "SELECT * " +
+								"FROM TalentsDominatedLanguages AS tdl " +
+								"WHERE tdl.talentId=?";
+		String queryPhotos = "SELECT * " +
+							 "FROM TalentsPhotos AS tpt " +
+							 "WHERE tpt.talentId=?";
+
+		try
+		{
+			statement = connection.prepareStatement(queryTalent);
+			statement.setLong(1, thumbnail.getId());
+
+			result = statement.executeQuery();
+			result.next();
+
+			thumbnail.setName(result.getString(2));
+			thumbnail.setSurname(result.getString("surname"));
+			thumbnail.setBirthdate(result.getDate("birthdate"));
+			thumbnail.setSex(Sex.identifierOf(result.getString("sex")));
+			thumbnail.setAddress(new TreeMap<String, String>());
+			thumbnail.getAddress().put("Numero", result.getString("num"));
+			thumbnail.getAddress().put("Calle", result.getString("street"));
+			thumbnail.getAddress().put("Sector", result.getString("neighborhood"));
+			thumbnail.getAddress().put("Provincia", result.getString("city"));
+			thumbnail.setEmail(result.getString("email"));
+			thumbnail.setStature(result.getFloat("stature"));
+			thumbnail.setEmail(result.getString("email"));
+			thumbnail.setPhysique(Physique.identifierOf(result.getString("physique")));
+			thumbnail.setSkinTone(SkinTone.identifierOf(result.getString("skinTone")));
+			thumbnail.setHairTexture(HairTexture.identifierOf(result.getString("hairTexture")));
+			thumbnail.setHairColor(result.getString("hairColor"));
+			thumbnail.setEyeColor(result.getString("eyeColor"));
+			thumbnail.setProfileType(ProfileType.identifierOf(result.getString("profileType")));
+			thumbnail.setShirtSize(ShirtSize.identifierOf(result.getString("shirtSize")));
+			thumbnail.setPantSize(result.getString("pantsSize"));
+			thumbnail.setShoeSize(result.getFloat("shoeSize"));
+			thumbnail.setAcademicLevel(result.getString("academicLevel"));
+			thumbnail.setHobbies(result.getString("hobbies"));//result.getClob("hobbies").getSubString(1, (int) result.getClob("hobbies").length()));
+			thumbnail.setScheduleAvailable(result.getString("scheduleAvailable"));//result.getClob("scheduleAvailable").getSubString(1, 
+																//(int) result.getClob("scheduleAvailable").length()));
+			thumbnail.setArtisticExperience(result.getString("artisticExperience"));//result.getClob("artisticExperience").getSubString(1, 
+																//(int) result.getClob("artisticExperience").length()));
+			thumbnail.setStatus(Status.identifierOf(result.getString("status")));
+			thumbnail.setVideos(new TreeMap<String, InputStream>());
+			thumbnail.getVideos().put(result.getString(30), CatalogsHandler.parse(result.getBytes("video")));
+
+			statement = connection.prepareStatement(queryNetwork);
+			statement.setLong(1, thumbnail.getId());
+
+			result = statement.executeQuery();
+		
+			thumbnail.setSocialNetworks(new TreeMap<String, String>());
+			while (result.next())
+			{
+				thumbnail.getSocialNetworks().put(result.getString("network"), result.getString("account"));
+			}
+
+			statement = connection.prepareStatement(queryPhone);
+			statement.setLong(1, thumbnail.getId());
+
+			result = statement.executeQuery();
+
+			while (result.next())
+			{
+				if (result.getString("type") == "M")
+					thumbnail.setMobilePhone(result.getString("num"));
+				else
+					thumbnail.setHomePhone(result.getString("num"));
+			}
+
+			statement = connection.prepareStatement(querySkills);
+			statement.setLong(1, thumbnail.getId());
+
+			result = statement.executeQuery();
+			
+			thumbnail.setArtisticSkills(new ArrayList<String>());
+			while (result.next())
+			{
+				thumbnail.getArtisticSkills().add(result.getString("skill"));
+			}
+
+			statement = connection.prepareStatement(queryLanguages);
+			statement.setLong(1, thumbnail.getId());
+
+			result = statement.executeQuery();
+			
+			thumbnail.setDominatedLanguages(new ArrayList<String>());
+			while (result.next())
+			{
+				thumbnail.getDominatedLanguages().add(result.getString("language"));
+			}
+
+			statement = connection.prepareStatement(queryPhotos);
+			statement.setLong(1, thumbnail.getId());
+
+			result = statement.executeQuery();
+			
+			thumbnail.setPhotos(new TreeMap<String, java.awt.image.BufferedImage>());
+			while (result.next())
+			{
+				CatalogsHandler.addPhotoEntry(thumbnail.getPhotos(), result.getString("name"), 
+											  result.getBlob("photo").getBinaryStream());
+			}
+
+			statement.close();
+			result.close();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+
+		return thumbnail;
+	}
+	public Project retrive (Project thumbnail)
+	{
+		PreparedStatement statement;
+		ResultSet result;
+		Talent talent;
+
+		String queryProject = "SELECT * " +
+							  "FROM Projects AS p " +
+							  "WHERE p.id=?";
+		String queryRoles = "SELECT * " +
+							"FROM ProjectsRoles AS pr " +
+							"WHERE pr.projectId=?";
+		String queryTalents = "SELECT pr.name, t.id, tp.photo, t.name, t.birthdate, t.profileType " +
+							  "FROM ProposedTalents AS pt, ProjectsRoles AS pr, Talents AS t, " +
+							  "TalentsPhotos AS tp " +
+							  "WHERE pr.projectId=? AND pt.roleId=pr.id AND pt.talentId=t.id AND " +
+							  "(t.id=tp.talentId AND tp.name='Rostro') " +
+							  "ORDER BY pr.name";
+		String queryTalentSelected = "SELECT pr.name, t.id, tp.photo, t.name, t.birthdate, t.profileType " +
+									 "FROM ProposedTalents AS pt, ProjectsRoles AS pr, Talents AS t, " +
+									 "TalentsPhotos AS tp " +
+									 "WHERE pr.projectId=? AND pt.roleId=pr.id AND pt.talentId=t.id AND " +
+									 "(t.id=tp.talentId AND tp.name='Rostro') AND pt.isSelected=true";
+
+		try
+		{
+			statement = connection.prepareStatement(queryProject);
+			statement.setLong(1, thumbnail.getId());
+
+			result = statement.executeQuery();
+			result.next();
+
+			thumbnail.setTitle(result.getString("title"));
+			thumbnail.setType(Type.identifierOf(result.getString("type")));
+			thumbnail.setProducer(result.getString("producer"));
+			thumbnail.setDirector(result.getString("director"));
+			thumbnail.setState(State.identifierOf(result.getString("state")));
+
+			statement = connection.prepareStatement(queryRoles);
+			statement.setLong(1, thumbnail.getId());
+
+			result = statement.executeQuery();
+
+			thumbnail.setRoles(new TreeMap<Category, String>());
+			while (result.next())
+			{
+				thumbnail.getRoles().put(Category.identifierOf(result.getString("category")), result.getString("name"));
+			}
+
+			statement = connection.prepareStatement(queryTalents);
+			statement.setLong(1, thumbnail.getId());
+
+			result = statement.executeQuery();
+
+			thumbnail.setPreselecteds(new TreeMap<String, ArrayList<Talent>>());
+			while (result.next())
+			{
+				if (thumbnail.getPreselecteds().containsKey(result.getString(1)))
+				{
+					talent = new Talent();
+					talent.setId(result.getLong(2));
+					talent.setPhotos(CatalogsHandler.parse("Rostro", result.getBlob(3).getBinaryStream()));
+					talent.setName(result.getString(4));
+					talent.setBirthdate(new java.util.Date(result.getDate(5).getTime()));
+					talent.setProfileType(ProfileType.identifierOf(result.getString(6)));
+
+					thumbnail.getPreselecteds().get(result.getString(1)).add(talent);
+				}
+				else
+					thumbnail.getPreselecteds().put(result.getString(1), new ArrayList<Talent>());
+			}
+
+			statement = connection.prepareStatement(queryTalentSelected);
+			statement.setLong(1, thumbnail.getId());
+
+			result = statement.executeQuery();
+
+			thumbnail.setSelecteds(new TreeMap<String, Talent>());
+			while (result.next())
+			{
+				talent = new Talent();
+				talent.setId(result.getLong(2));
+				talent.setPhotos(CatalogsHandler.parse("Rostro", result.getBlob(3).getBinaryStream()));
+				talent.setName(result.getString(4));
+				talent.setBirthdate(new java.util.Date(result.getDate(5).getTime()));
+				talent.setProfileType(ProfileType.identifierOf(result.getString(6)));
+
+				thumbnail.getSelecteds().put(result.getString(1), talent);
+			}
+
+			statement.close();
+			result.close();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+
+		return thumbnail;
 	}
 
 	private boolean isServerStarted ()

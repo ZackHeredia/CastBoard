@@ -405,6 +405,50 @@ public class MasterFrame extends JFrame
 			this.setTitle(title + " - CastBoard");
 		}
 	}
+	public void displayTalentDetail (String id)
+	{
+		TalentDetailWindow talentDetail;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			talentDetail = new TalentDetailWindow(id);
+			scrollTop();
+			title = "Detalle de Talento";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(talentDetail, title);
+			windows.add(talentDetail);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayProjectDetail (String id)
+	{
+		ProjectDetailWindow projectDetail;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			projectDetail = new ProjectDetailWindow(id);
+			scrollTop();
+			title = "Detalle de Proyecto";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(projectDetail, title);
+			windows.add(projectDetail);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
 	public void displayException (String message)
 	{
 		(new ExceptionPopUp(this)).display(message);
@@ -605,7 +649,7 @@ public class MasterFrame extends JFrame
 				public void actionPerformed (ActionEvent e)
 				{
 					String id = ((JButton) e.getSource()).getName();
-					//CatalogsHandler.get(id, CatalogsHandler.PROJECT_SET);
+					displayProjectDetail(id);
 				}
 			});
 
@@ -633,9 +677,9 @@ public class MasterFrame extends JFrame
 
 			photoWrapper = new JPanel();
 			photoWrapper.setLayout(new BorderLayout());
-			photoWrapper.setPreferredSize(new Dimension(128, 128));
-			photoWrapper.setBorder(BorderFactory.createLineBorder(Color.black));
-			photoWrapper.setBackground(new Color(210, 210, 210));
+			// photoWrapper.setPreferredSize(new Dimension(128, 128));
+			// photoWrapper.setBorder(BorderFactory.createLineBorder(Color.black));
+			// photoWrapper.setBackground(new Color(210, 210, 210));
 
 			list = new JPanel();
 			list.setLayout(new BorderLayout());
@@ -653,8 +697,6 @@ public class MasterFrame extends JFrame
 			age.setToolTipText("Edad");
 			profileType.setToolTipText("Tipo de perfil");
 
-			//photoWrapper.add(Box.createRigidArea(new Dimension(128, 128)));
-			//photo.setPreferredSize(new Dimension(128, 128));
 			photoWrapper.add(photo);
 
 			list.add(name, BorderLayout.NORTH);
@@ -669,7 +711,7 @@ public class MasterFrame extends JFrame
 				public void actionPerformed (ActionEvent e)
 				{
 					String id = ((JButton) e.getSource()).getName();
-					//CatalogsHandler.get(id, CatalogsHandler.TALENT_SET);
+					displayTalentDetail(id);
 				}
 			});
 
@@ -688,9 +730,24 @@ public class MasterFrame extends JFrame
 	    sclHorizontal.setValue(sclHorizontal.getMinimum());
 	}
 
-	public ImageIcon scale (ImageIcon image, int height, int width)
+	public ImageIcon scale (ImageIcon image, int width, int height)
 	{
-		return new ImageIcon((image.getImage().getScaledInstance(height, width, Image.SCALE_SMOOTH)));
+		int scaledWidth = image.getIconWidth();
+        int scaledHeight = image.getIconHeight();
+
+        if(image.getIconWidth() > width)
+        {
+          scaledWidth = width;
+          scaledHeight = (scaledWidth * image.getIconHeight()) / image.getIconWidth();
+        }
+
+        if(scaledHeight > height)
+        {
+          scaledHeight = height;
+          scaledWidth = (image.getIconWidth() * scaledHeight) / image.getIconHeight();
+        }
+
+		return new ImageIcon((image.getImage().getScaledInstance(scaledWidth, scaledHeight, Image.SCALE_SMOOTH)));
 	}
 
 	public void startWaitingLayer ()

@@ -15,6 +15,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 public abstract class CatalogsHandler
 {
@@ -23,6 +26,7 @@ public abstract class CatalogsHandler
 	public static final int PROJECT_SET = 2;
 
 	private static final TreeMap<String, String> PHOTOS_PATHS = new TreeMap<String, String>();
+	private static final TreeMap<String, String> VIDEOS_PATHS = new TreeMap<String, String>();
 
 	public static boolean connect (String user, String pass)
 	{
@@ -71,6 +75,28 @@ public abstract class CatalogsHandler
 				break;
 			case PROJECT_SET:
 				set = searchProject(args);
+
+				break;
+			default:
+				set = null;
+
+				break;
+		}
+
+		return set;
+	}
+	public static ArrayList<ArrayList<String>> get (String id, int setType)
+	{
+		ArrayList<ArrayList<String>> set = null;
+
+		switch (setType)
+		{
+			case TALENT_SET:
+				set = getTalent(id);
+
+				break;
+			case PROJECT_SET:
+				set = getProject(id);
 
 				break;
 			default:
@@ -244,8 +270,8 @@ public abstract class CatalogsHandler
 	{
 		Project criteria = new Project();
 		ArrayList<ArrayList<String>> set = new ArrayList<ArrayList<String>>();
-		ArrayList<Project> items;
 		ArrayList<String> inner;
+		ArrayList<Project> items;
 
 		criteria.setTitle(args.get(0));
 		criteria.setType(Type.identifierOf(args.get(1)));
@@ -274,6 +300,147 @@ public abstract class CatalogsHandler
 		return set;
 	}
 
+	private static ArrayList<ArrayList<String>> getTalent (String id)
+	{
+		ArrayList<ArrayList<String>> values = new ArrayList<ArrayList<String>>();
+		ArrayList<String> inner;
+		Talent talent = new Talent();
+		String[] photos = new String[3];
+		String[] videos = new String[1];
+
+		talent.setId(Long.parseLong(id));
+		getInterfaceDAL().retrive(talent);
+
+		photos = parse(talent.getPhotos(), talent.getId());
+		videos = parse(talent.getVideos(), Long.toString(talent.getId()));
+
+		inner = new ArrayList<String>();
+
+		inner.add(photos[2]);
+		inner.add(photos[1]);
+		inner.add(photos[0]);
+		inner.add(videos[0]);
+
+		values.add(inner);
+
+		inner = new ArrayList<String>();
+
+		inner.add(talent.getName() + " " + talent.getSurname());
+		inner.add(parse(talent.getBirthdate()));
+		inner.add(talent.getSex().toString());
+
+		values.add(inner);
+
+		inner = new ArrayList<String>();
+
+		inner.add(talent.getProfileType().toString());
+		inner.add(parse(talent.getStature()));
+		inner.add(talent.getPhysique().toString());
+		inner.add(talent.getSkinTone().toString());
+		inner.add(talent.getHairTexture().toString());
+		inner.add(talent.getHairColor());
+		inner.add(talent.getEyeColor());
+
+		values.add(inner);
+
+		inner = new ArrayList<String>();
+
+		inner.add((talent.getShirtSize()!=null) ? talent.getShirtSize().toString() : "");
+		inner.add((talent.getPantSize()!=null) ? talent.getPantSize() : "");
+		inner.add((talent.getShoeSize()==0) ? "" : Float.toString(talent.getShoeSize()));
+
+		values.add(inner);
+
+		inner = new ArrayList<String>();
+
+		inner.add(parse(talent.getMobilePhone()));
+		inner.add((talent.getSocialNetworks().get("Facebook") == null) ? "" : talent.getSocialNetworks().get("Facebook"));
+		inner.add((talent.getSocialNetworks().get("Twitter") == null) ? "" : talent.getSocialNetworks().get("Twitter"));
+		inner.add(talent.getEmail());
+		inner.add(parse(talent.getAddress()));
+		inner.add(parse(talent.getHomePhone()));
+		inner.add((talent.getSocialNetworks().get("Instagram") == null) ? "" : talent.getSocialNetworks().get("Instagram"));
+		inner.add(talent.getStatus().toString());
+		inner.add((talent.getAddress().get("Provincia") == null) ? "" : talent.getAddress().get("Provincia"));
+
+		values.add(inner);
+
+		inner = new ArrayList<String>();
+
+		inner.add(parse(talent.getArtisticSkills()));
+		inner.add(parse(talent.getDominatedLanguages()));
+		inner.add((talent.getAcademicLevel() == null) ? "" : talent.getAcademicLevel());
+		inner.add((talent.getArtisticExperience() == null) ? "" : talent.getArtisticExperience());
+		inner.add((talent.getScheduleAvailable() == null) ? "" : talent.getScheduleAvailable());
+		inner.add((talent.getHobbies() == null) ? "" : talent.getHobbies());
+
+		values.add(inner);
+
+		return values;
+	}
+	private static ArrayList<ArrayList<String>> getProject (String id)
+	{
+		ArrayList<ArrayList<String>> values = new ArrayList<ArrayList<String>>();
+		Project project = new Project();
+		ArrayList<String> inner;
+		Talent talent;
+
+		project.setId(Long.parseLong(id));
+		getInterfaceDAL().retrive(project);
+
+		inner = new ArrayList<String>();
+
+		inner.add(project.getTitle());
+		inner.add(project.getType().toString());
+		inner.add(project.getProducer());
+		inner.add(project.getDirector());
+		inner.add(project.getState().toString());
+
+		values.add(inner);
+
+		for (Entry<Category, String> role : project.getRoles().entrySet())
+		{
+
+			inner = new ArrayList<String>();
+			
+			inner.add(parse(role));
+
+			values.add(inner);
+
+			if (project.getSelecteds().isEmpty() && !project.getPreselecteds().isEmpty())
+			{
+				for (Talent talen : project.getPreselecteds().get(role.getValue()))
+				{
+					inner = new ArrayList<String>();
+
+					inner.add(Long.toString(talen.getId()));
+					inner.add(parse(talen.getPhotos(), talen.getId())[0]);
+					inner.add(talen.getName());
+					inner.add(parse(talen.getBirthdate()));
+					inner.add(talen.getProfileType().toString());
+
+					values.add(inner);
+				}
+			}
+			else if (!project.getSelecteds().isEmpty())
+			{
+				talent = project.getSelecteds().get(role.getValue());
+
+				inner = new ArrayList<String>();
+
+				inner.add(Long.toString(talent.getId()));
+				inner.add(parse(talent.getPhotos(), talent.getId())[0]);
+				inner.add(talent.getName());
+				inner.add(parse(talent.getBirthdate()));
+				inner.add(talent.getProfileType().toString());
+				
+				values.add(inner);
+			}
+		}
+		
+		return values;
+	}
+
 	@Deprecated
 	private static String parse (Date birthdate)
 	{
@@ -295,6 +462,16 @@ public abstract class CatalogsHandler
 		float decimal = Float.parseFloat(inches) / 12;
 
 		return integer + decimal;
+	}
+	private static String parse (float stature)
+	{
+		if (stature == 0)
+			return "";
+
+		int feet = (int) stature;
+		float inches = (stature - feet) * 12;
+
+		return (feet + "' " + inches + "''");
 	}
 	public static InputStream parse (BufferedImage photo)
 	{
@@ -329,7 +506,7 @@ public abstract class CatalogsHandler
 
 		return photos;
 	}
-	public static String[] parse (TreeMap<String, BufferedImage> photos, long id)
+	private static String[] parse (TreeMap<String, BufferedImage> photos, long id)
 	{
 		String[] photosPath = new String[photos.size()];
 		File photoFile;
@@ -360,5 +537,95 @@ public abstract class CatalogsHandler
 		}
 
 		return photosPath;
+	}
+	public static InputStream parse (byte[] bytes)
+	{
+		return new ByteArrayInputStream(bytes);
+	}
+	private static String[] parse (TreeMap<String,InputStream> videos, String id)
+	{
+		String[] videosPath = new String[videos.size()];
+		Path videoPath;
+		int i = 0;
+
+		try
+		{
+			for (Entry<String, InputStream> video : videos.entrySet())
+			{
+				if (VIDEOS_PATHS.containsKey(video.getKey() + id))
+					videosPath[i] = VIDEOS_PATHS.get(video.getKey() + id);
+				else
+				{
+					videoPath = Files.createTempFile(video.getKey() + id, ".mp4");
+					videoPath.toFile().deleteOnExit();
+
+					Files.copy(video.getValue(), videoPath, StandardCopyOption.REPLACE_EXISTING);
+
+					videosPath[i] = videoPath.toAbsolutePath().toString();
+					VIDEOS_PATHS.put(video.getKey() + id, videoPath.toAbsolutePath().toString());
+					i++;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+
+		return videosPath;
+	}
+	private static String parse (String phone)
+	{
+		if (phone == null)
+			return "";
+
+		String phonePattern = "(%s) %s-%s";
+
+		return String.format(phonePattern, phone.substring(0,3), phone.substring(3,6), phone.substring(6));
+	}
+	private static String parse (TreeMap<String, String> address)
+	{
+		String addressPattern = "";
+
+		if (address.get("Calle") != null)
+			addressPattern = addressPattern.concat("C/ %s");	
+		if (address.get("Numero") != null)
+			addressPattern = addressPattern.concat(" #%s");
+		if (address.get("Sector") != null)
+			addressPattern = addressPattern.concat(", %s");
+
+		return String.format(addressPattern, address.get("Calle"), address.get("Numero"), address.get("Sector"));
+	}
+	private static String parse (ArrayList<String> list)
+	{
+		if (list.isEmpty())
+			return "";
+
+		String strList = list.get(0);
+
+		for(int i = 1; i < list.size(); i++)
+		{
+			strList.concat(", " + list.get(i));
+		}
+
+		return strList;
+	}
+	private static String parse (Entry<Category, String> role)
+	{
+		String strRole = role.getValue() + "[" + role.getKey().toString() + "]";
+
+		return strRole;
+	}
+
+	public static void addPhotoEntry (TreeMap<String, BufferedImage> photos, String name, InputStream inputStream)
+	{
+		try
+		{
+			photos.put(name , ImageIO.read(inputStream));
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 }
