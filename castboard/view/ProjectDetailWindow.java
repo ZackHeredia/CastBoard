@@ -156,21 +156,19 @@ public class ProjectDetailWindow extends JPanel
 	}
 	private void createPnlRoles ()
 	{
-		Border etched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);System.out.println("AN");
-		ArrayList<ArrayList<String>> rolesValues = new ArrayList<ArrayList<String>>(values.subList(1, values.size()));System.out.println("DE");
+		Border etched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
+		ArrayList<ArrayList<String>> rolesValues = new ArrayList<ArrayList<String>>(values.subList(1, values.size()));
 		ArrayList<ArrayList<String>> selection = new ArrayList<ArrayList<String>>();
-		String role = (rolesValues.isEmpty()) ? null : rolesValues.get(0).get(0) ;System.out.println("DE2");
+		String role = (rolesValues.isEmpty()) ? null : rolesValues.get(0).get(0);
 		
 		pnlRoles = new JPanel();
 		pnlRoles.setLayout(new BoxLayout(pnlRoles, BoxLayout.Y_AXIS));
 		pnlRoles.setBorder(BorderFactory.createTitledBorder(etched, "Roles"));
 
-System.out.println("DE3");
-System.out.println(rolesValues.isEmpty());
 		if (!rolesValues.isEmpty())
 		{
 			for (ArrayList<String> roleValues : rolesValues) 
-			{System.out.println("DEIA");
+			{
 				if ((roleValues.size() == 1 && !roleValues.get(0).equals(role)) || roleValues.equals(rolesValues.get(rolesValues.size() - 1)))
 				{
 					if (roleValues.size() > 1 && roleValues.equals(rolesValues.get(rolesValues.size() - 1)))
@@ -189,7 +187,7 @@ System.out.println(rolesValues.isEmpty());
 		}
 		else
 		{
-			pnlRoles.add(new JPanel());System.out.println("DE4");
+			pnlRoles.add(new JPanel());
 		}
 	}
 
