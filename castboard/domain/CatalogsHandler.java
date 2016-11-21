@@ -24,6 +24,8 @@ public abstract class CatalogsHandler
 	public static final int FRONT_SET = 0;
 	public static final int TALENT_SET = 1;
 	public static final int PROJECT_SET = 2;
+	public static final int CINEMA_SET = 3;
+	public static final int SEQUENCE_SET = 4;
 
 	private static final TreeMap<String, String> PHOTOS_PATHS = new TreeMap<String, String>();
 	private static final TreeMap<String, String> VIDEOS_PATHS = new TreeMap<String, String>();
@@ -97,6 +99,14 @@ public abstract class CatalogsHandler
 				break;
 			case PROJECT_SET:
 				set = getProject(id);
+
+				break;
+			case CINEMA_SET:
+				set = getCinemaProject(id);
+
+				break;
+			case SEQUENCE_SET:
+				set = getSequence(id);
 
 				break;
 			default:
@@ -440,6 +450,102 @@ public abstract class CatalogsHandler
 		
 		return values;
 	}
+	private static ArrayList<ArrayList<String>> getCinemaProject (String id)
+	{
+		CinemaProject cinemaProject = new CinemaProject();
+		ArrayList<ArrayList<String>> values = new ArrayList<ArrayList<String>>();
+		ArrayList<String> inner;
+
+		cinemaProject.setId(Long.parseLong(id));
+		getInterfaceDAL().retrive(cinemaProject);
+
+		inner = new ArrayList<String>();
+
+		inner.add(cinemaProject.getTitle());
+
+		values.add(inner);
+
+		if(!cinemaProject.getSequences().isEmpty())
+		{
+			for (Sequence thumbnail : cinemaProject.getSequences())
+			{
+				inner = new ArrayList<String>(); 
+
+				inner.add(Long.toString(thumbnail.getId()));
+				inner.add(Integer.toString(thumbnail.getNumber()));
+				inner.add(thumbnail.getFilmingDate().toString());
+				inner.add(thumbnail.getLocation());
+				inner.add(Integer.toString(thumbnail.getScriptPage()));
+
+				values.add(inner);
+			}
+		}
+
+		return values;
+	}
+	private static ArrayList<ArrayList<String>> getSequence (String id)
+	{
+		Sequence sequence = new Sequence();
+		ArrayList<ArrayList<String>> values = new ArrayList<ArrayList<String>>();
+		ArrayList<String> inner;
+		Talent talent;
+
+		sequence.setId(Long.parseLong(id));
+		getInterfaceDAL().retrive(sequence);
+
+		inner = new ArrayList<String>();
+
+		inner.add((sequence.getNumber() == 0) ? "" : Integer.toString(sequence.getNumber()));
+		inner.add((sequence.getDescription() == null) ? "" : sequence.getDescription());
+		inner.add(sequence.getFilmingDate().toString());
+		inner.add(sequence.getLocation());
+		inner.add(sequence.getLocationType().toString());
+		inner.add(sequence.getDayMoment().toString());
+		inner.add(Integer.toString(sequence.getScriptPage()));
+		inner.add((sequence.getScriptDay() == 0) ? "" : Integer.toString(sequence.getScriptDay()));
+
+		values.add(inner);
+
+		if(!sequence.getSelecteds().isEmpty())
+		{
+			for (Entry<String, Talent> selected : sequence.getSelecteds().entrySet())
+			{
+				inner = new ArrayList<String>(); 
+
+				inner.add(selected.getKey());
+
+				values.add(inner);
+
+				inner = new ArrayList<String>();
+				talent = selected.getValue();
+
+				inner.add(Long.toString(talent.getId()));
+				inner.add(parse(talent.getPhotos(), talent.getId())[0]);
+				inner.add(talent.getName());
+				inner.add(parse(talent.getBirthdate()));
+				inner.add(talent.getProfileType().toString());
+
+				values.add(inner);
+			}
+		}
+
+		return values;
+	}
+
+	public static boolean remove (String id)
+	{
+		return getInterfaceDAL().suppress(Long.parseLong(id));
+	}
+
+	public static boolean switchStatus (String id, String currentStatus)
+	{
+		return getInterfaceDAL().switchStatus(Long.parseLong(id), Status.identifierOf(currentStatus));
+	}
+
+	public static boolean terminate (String id)
+	{
+		return getInterfaceDAL().terminate(Long.parseLong(id));
+	}
 
 	@Deprecated
 	private static String parse (Date birthdate)
@@ -610,7 +716,7 @@ public abstract class CatalogsHandler
 
 		return strList;
 	}
-	private static String parse (Entry<Category, String> role)
+	public static String parse (Entry<Category, String> role)
 	{
 		String strRole = role.getValue() + "[" + role.getKey().toString() + "]";
 

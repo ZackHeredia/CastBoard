@@ -52,7 +52,7 @@ public class Sequence extends Item
 	{
 		this.scriptDay = scriptDay;
 	}
-	public void selecteds (TreeMap<String, Talent> selecteds)
+	public void setSelecteds (TreeMap<String, Talent> selecteds)
 	{
 		this.selecteds = selecteds;
 	}
@@ -81,15 +81,15 @@ public class Sequence extends Item
 	{
 		return dayMoment;
 	}
-	public int scriptPage ()
+	public int getScriptPage ()
 	{
 		return scriptPage;
 	}
-	public int scriptDay ()
+	public int getScriptDay ()
 	{
 		return scriptDay;
 	}
-	public TreeMap<String, Talent> selecteds ()
+	public TreeMap<String, Talent> getSelecteds ()
 	{
 		return selecteds;
 	}

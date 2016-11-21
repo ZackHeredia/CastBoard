@@ -14,6 +14,8 @@ import java.sql.SQLException;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.TreeMap;
+import java.util.Map.Entry;
+import java.util.AbstractMap.SimpleEntry;
 import java.io.InputStream;
 
 public class InterfaceDAL
@@ -659,6 +661,192 @@ public class InterfaceDAL
 		}
 
 		return thumbnail;
+	}
+	public CinemaProject retrive (CinemaProject thumbnail)
+	{
+		Statement statement;
+		ResultSet result;
+		Sequence sequence;
+		ArrayList<Sequence> sequences = new ArrayList<Sequence>();
+
+		String queryTitle = "SELECT title " +
+							"FROM Projects " +
+							"WHERE id=" + thumbnail.getId();
+		String querySequences = "SELECT id, num, filmingDate, location, scriptPage " +
+								"FROM Sequences " +
+								"WHERE projectId=" + thumbnail.getId();
+
+		try
+		{
+			statement = connection.createStatement();
+
+			result = statement.executeQuery(queryTitle);
+
+			result.next();
+			thumbnail.setTitle(result.getString(1));
+
+			result = statement.executeQuery(querySequences);
+
+			while(result.next())
+			{
+				sequence = new Sequence();
+
+				sequence.setId(result.getLong(1));
+				sequence.setNumber(result.getInt(2));
+				sequence.setFilmingDate(result.getDate(3));
+				sequence.setLocation(result.getString(4));
+				sequence.setScriptPage(result.getInt(5));
+
+				sequences.add(sequence);
+			}
+
+			statement.close();
+			result.close();
+		}
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+
+		thumbnail.setSequences(sequences);
+
+		return thumbnail;
+	}
+	public Sequence retrive (Sequence thumbnail)
+	{
+		Statement statement;
+		ResultSet result;
+		Entry<Category, String> role;
+		Talent talent;
+
+		String querySequence = "SELECT * " +
+							   "FROM Sequences " +
+							   "WHERE id=" + thumbnail.getId();
+		String querySelecteds = "SELECT pr.category, pr.name, t.id, tp.photo, t.name, t.birthdate, " +
+									   "t.profileType " +
+								"FROM SequencesTalents AS st LEFT JOIN ProjectsRoles AS pr ON st.roleId=pr.id" +
+									" LEFT JOIN Talents AS t ON st.talentId=t.id, TalentsPhotos AS tp " +
+								"WHERE (t.id=tp.talentId AND tp.name='Rostro') AND sequenceId=" + thumbnail.getId();
+
+		try
+		{
+			statement = connection.createStatement();
+
+			result = statement.executeQuery(querySequence);
+
+			result.next();
+
+			thumbnail.setNumber(result.getInt("num"));
+			thumbnail.setDescription(result.getString("description"));
+			thumbnail.setFilmingDate(result.getDate("filmingDate"));
+			thumbnail.setLocationType(LocationType.identifierOf(result.getString("locationType")));
+			thumbnail.setLocation(result.getString("location"));
+			thumbnail.setDayMoment(DayMoment.identifierOf(result.getString("dayMoment")));
+			thumbnail.setScriptPage(result.getInt("scriptPage"));
+			thumbnail.setScriptDay(result.getInt("scriptDay"));
+
+			result = statement.executeQuery(querySelecteds);
+
+			thumbnail.setSelecteds(new TreeMap<String, Talent>());
+			while(result.next())
+			{
+				role = new SimpleEntry<Category, String>(Category.identifierOf(result.getString(1)), 
+														 result.getString(2));
+				talent = new Talent();
+
+				talent.setId(result.getLong(3));
+				talent.setPhotos(CatalogsHandler.parse("Rostro", result.getBlob(4).getBinaryStream()));
+				talent.setName(result.getString(5));
+				talent.setBirthdate(new java.util.Date(result.getDate(6).getTime()));
+				talent.setProfileType(ProfileType.identifierOf(result.getString(7)));
+
+				thumbnail.getSelecteds().put(CatalogsHandler.parse(role), talent);
+			}
+
+			statement.close();
+			result.close();
+		}
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+
+		return thumbnail;
+	}
+
+	public boolean suppress (long id)
+	{
+		PreparedStatement statement;
+		int affectedRows = 0;
+		
+		String update = "UPDATE Items SET isSuppressed=true WHERE id=?";
+		
+	try
+	{
+		statement = connection.prepareStatement(update);
+		statement.setLong(1, id);
+			
+		affectedRows = statement.executeUpdate();
+	}
+	catch (SQLException e)
+	{
+		e.printStackTrace();
+	}
+		
+		return (affectedRows >= 1);
+	}
+
+	public boolean switchStatus (long id, Status currentStatus)
+	{
+		PreparedStatement statement;
+		int affectedRows = 0;;
+		
+		String update = "UPDATE Talents SET status=? WHERE id=?";
+		
+	try
+	{
+		statement = connection.prepareStatement(update);
+			
+		statement.setString(1, ((currentStatus.equals("Talento") ? "Estrella" : "Talento")));
+		statement.setLong(2, id);
+			
+		affectedRows = statement.executeUpdate();
+	}
+	catch (SQLException e)
+	{
+		e.printStackTrace();
+	}
+		
+		return (affectedRows >= 1);
+	}
+
+	public boolean terminate (long id)
+	{
+		return changeState(id, "Termino");
+	}
+
+	private boolean changeState (long id, String state)
+	{
+		PreparedStatement statement;
+		int affectedRows = 0;;
+		
+		String update = "UPDATE Projects SET state=? WHERE id=?";
+		
+		try
+		{
+			statement = connection.prepareStatement(update);
+				
+			statement.setString(1, state);
+			statement.setLong(2, id);
+				
+			affectedRows = statement.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return (affectedRows >= 1);
 	}
 
 	private boolean isServerStarted ()

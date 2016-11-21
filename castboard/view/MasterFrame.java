@@ -449,6 +449,50 @@ public class MasterFrame extends JFrame
 			this.setTitle(title + " - CastBoard");
 		}
 	}
+	public void displaySequenceBreakdown (String id)
+	{
+		SequenceBreakdownWindow sequenceBreakdown;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			sequenceBreakdown = new SequenceBreakdownWindow(id);
+			scrollTop();
+			title = "Desglose de Secuencias";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(sequenceBreakdown, title);
+			windows.add(sequenceBreakdown);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displaySequenceDetail (String id, String pTitle)
+	{
+		SequenceDetailWindow sequenceDetail;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			sequenceDetail = new SequenceDetailWindow(id, pTitle);
+			scrollTop();
+			title = "Detalle de Secuencias";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(sequenceDetail, title);
+			windows.add(sequenceDetail);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
 	public void displayException (String message)
 	{
 		(new ExceptionPopUp(this)).display(message);
@@ -712,6 +756,64 @@ public class MasterFrame extends JFrame
 				{
 					String id = ((JButton) e.getSource()).getName();
 					displayTalentDetail(id);
+				}
+			});
+
+			thumbnails.add(thumbnail);
+		}
+
+		return thumbnails;
+	}
+	public ArrayList<JButton> makeSequenceThumbnails (ArrayList<ArrayList<String>> sequences, String title)
+	{
+		ArrayList<JButton> thumbnails = new ArrayList<JButton>();
+		JButton thumbnail;
+		JPanel list;
+		JLabel number;
+		JLabel filmingDate;
+		JLabel location;
+		JLabel scriptPage;
+
+		for (ArrayList<String> sequence : sequences)
+		{
+			thumbnail = new JButton("");
+			thumbnail.setLayout(new BoxLayout(thumbnail, BoxLayout.Y_AXIS));
+			thumbnail.setPreferredSize(new Dimension(132, 196));
+
+			list = new JPanel();
+			list.setLayout(new BorderLayout());
+			list.setOpaque(false);
+
+			thumbnail.setName(sequence.get(0));
+			number = new JLabel(sequence.get(1));
+			filmingDate = new JLabel("\u2022 " + sequence.get(2));
+			location = new JLabel("\u2022 " + sequence.get(3));
+			scriptPage = new JLabel("\u2022 " + sequence.get(4));
+
+			number.setFont(new Font("Serif", Font.BOLD, 18));
+			number.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+			list.add(filmingDate, BorderLayout.NORTH);
+			list.add(location, BorderLayout.CENTER);
+			list.add(scriptPage, BorderLayout.SOUTH);
+
+			thumbnail.setToolTipText("Ver detalle de la sequencia");
+			number.setToolTipText("Número");
+			filmingDate.setToolTipText("Fecha de rodaje");
+			location.setToolTipText("Locación");
+			scriptPage.setToolTipText("Pagina en el guion");
+
+			thumbnail.add(Box.createRigidArea(new Dimension(60, 60)));
+			thumbnail.add(number);
+			thumbnail.add(Box.createRigidArea(new Dimension(60, 60)));
+			thumbnail.add(list);
+
+			thumbnail.addActionListener(new ActionListener()
+			{
+				public void actionPerformed (ActionEvent e)
+				{
+					String id = ((JButton) e.getSource()).getName();
+					displaySequenceDetail(id, title);
 				}
 			});
 

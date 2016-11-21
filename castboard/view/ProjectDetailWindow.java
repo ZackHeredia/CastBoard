@@ -7,7 +7,6 @@ import javax.swing.JLabel;
 import javax.swing.SwingWorker;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.ImageIcon;
 import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.Border;
@@ -31,11 +30,11 @@ public class ProjectDetailWindow extends JPanel
 	private JPanel pnlGenerals;
 	private JPanel pnlRoles;
 	private ArrayList<ArrayList<String>> values;
-	private JPanel pnlLargerMedia;
-	private JPanel pnlMedia;
+	private String id;
 
 	public ProjectDetailWindow (String id)
 	{
+		this.id = id;
 		masterFrame = MasterFrame.getInstance();
 		ProjectDetailWindow detail = this;
 		
@@ -112,7 +111,7 @@ public class ProjectDetailWindow extends JPanel
 		{
 			public void actionPerformed (ActionEvent e)
 			{
-				//delete();
+				delete();
 			}
 		});
 		btnPresent.addActionListener(new ActionListener()
@@ -126,14 +125,14 @@ public class ProjectDetailWindow extends JPanel
 		{
 			public void actionPerformed (ActionEvent e)
 			{
-				//switchStatus();
+				masterFrame.displaySequenceBreakdown(id);
 			}
 		});
 		btnTerminate.addActionListener(new ActionListener()
 		{
 			public void actionPerformed (ActionEvent e)
 			{
-				//switchStatus();
+				terminate();
 			}
 		});
 
@@ -287,5 +286,27 @@ public class ProjectDetailWindow extends JPanel
 		pnlRoleWrapper.add(pnlRoleActions);
 
 		pnlRoles.add(pnlRoleWrapper);
+	}
+
+	private void delete ()
+	{
+		if ((new ConfirmationPopUp(masterFrame)).display("El proyecto será eliminado"))
+		{
+			if (CatalogsHandler.remove(id))
+				(new SuccessNotificationPopUp(masterFrame)).display("El proyecto se ha eliminado");
+			else
+				(new FailureNotificationPopUp(masterFrame)).display("El proyecto no se ha eliminado");
+		}
+	}
+
+	private void terminate ()
+	{
+		if ((new ConfirmationPopUp(masterFrame)).display("El proyecto será terminado"))
+		{
+			if (CatalogsHandler.terminate(id))
+				(new SuccessNotificationPopUp(masterFrame)).display("El proyecto se ha terminado");
+			else
+				(new FailureNotificationPopUp(masterFrame)).display("El proyecto no se ha terminado");
+		}
 	}
 }

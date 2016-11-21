@@ -50,9 +50,11 @@ public class TalentDetailWindow extends JPanel
 	private ArrayList<String> largesMedia;
 	private ArrayList<JLabel> media;
 	private int currentLargeMedia;
+	private String id;
 
 	public TalentDetailWindow (String id)
 	{
+		this.id = id;
 		masterFrame = MasterFrame.getInstance();
 		TalentDetailWindow detail = this;
 		
@@ -178,7 +180,7 @@ public class TalentDetailWindow extends JPanel
 		{
 			public void actionPerformed (ActionEvent e)
 			{
-				//delete();
+				delete();
 			}
 		});
 		btnPreselect.addActionListener(new ActionListener()
@@ -192,7 +194,7 @@ public class TalentDetailWindow extends JPanel
 		{
 			public void actionPerformed (ActionEvent e)
 			{
-				//switchStatus();
+				switchStatus();
 			}
 		});
 
@@ -348,6 +350,28 @@ public class TalentDetailWindow extends JPanel
 		pnlLargerMedia.revalidate();
 		pnlMedia.revalidate();
 		this.repaint();
+	}
+
+	private void delete ()
+	{
+		if ((new ConfirmationPopUp(masterFrame)).display("El talento será eliminado"))
+		{
+			if (CatalogsHandler.remove(id))
+				(new SuccessNotificationPopUp(masterFrame)).display("El talento se ha eliminado");
+			else
+				(new FailureNotificationPopUp(masterFrame)).display("El talento no se ha eliminado");
+		}
+	}
+
+	private void switchStatus ()
+	{
+		if ((new ConfirmationPopUp(masterFrame)).display("El talento cambiará de estatus"))
+		{
+			if (CatalogsHandler.switchStatus(id, values.get(4).get(7)))
+				(new SuccessNotificationPopUp(masterFrame)).display("El talento ha cambiado de estatus");
+			else
+				(new FailureNotificationPopUp(masterFrame)).display("El talento no ha cambiado de estatus");
+		}
 	}
 
 	// Fig 21.6: MediaPanel.java
