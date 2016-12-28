@@ -21,6 +21,7 @@ import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 public class ProjectDetailWindow extends JPanel
 {
@@ -43,12 +44,13 @@ public class ProjectDetailWindow extends JPanel
 			protected Void doInBackground ()
 			{
 				values = CatalogsHandler.get(id, CatalogsHandler.PROJECT_SET);
+				TreeMap<String, String> roles = new TreeMap<String, String>();
 				
 				createPnlTitle();
-				createPnlActions();
+				createPnlActions(roles);
 				createPnlGenerals();
-				createPnlRoles();
-
+				createPnlRoles(roles);
+				
 				return null;
 			}
 
@@ -83,7 +85,7 @@ public class ProjectDetailWindow extends JPanel
 
 		pnlTitle.add(lblTitle);
 	}
-	private void createPnlActions ()
+	private void createPnlActions (TreeMap<String, String> roles)
 	{
 		JButton btnUpdate = new JButton("Actualizar");
 		JButton btnDelete = new JButton("Eliminar");
@@ -125,7 +127,7 @@ public class ProjectDetailWindow extends JPanel
 		{
 			public void actionPerformed (ActionEvent e)
 			{
-				masterFrame.displaySequenceBreakdown(id);
+				masterFrame.displaySequenceBreakdown(id, roles);
 			}
 		});
 		btnTerminate.addActionListener(new ActionListener()
@@ -139,7 +141,7 @@ public class ProjectDetailWindow extends JPanel
 		pnlActions.add(btnUpdate);
 		pnlActions.add(btnDelete);
 		pnlActions.add(btnPresent);
-		if (values.get(0).get(1).equals("Cinematografico"))
+		if (values.get(0).get(1).equals("Cinematografico") && values.get(0).get(4).equals("Desarrollo"))
 			pnlActions.add(btnBreakdown);
 		pnlActions.add(btnTerminate);
 	}
@@ -153,16 +155,17 @@ public class ProjectDetailWindow extends JPanel
 
 		prepareField(pnlGenerals, "Generales", generals, generalsValues);
 	}
-	private void createPnlRoles ()
+	private void createPnlRoles (TreeMap<String, String> roles)
 	{
 		Border etched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
 		ArrayList<ArrayList<String>> rolesValues = new ArrayList<ArrayList<String>>(values.subList(1, values.size()));
 		ArrayList<ArrayList<String>> selection = new ArrayList<ArrayList<String>>();
 		String role = (rolesValues.isEmpty()) ? null : rolesValues.get(0).get(0);
-		
+
 		pnlRoles = new JPanel();
 		pnlRoles.setLayout(new BoxLayout(pnlRoles, BoxLayout.Y_AXIS));
 		pnlRoles.setBorder(BorderFactory.createTitledBorder(etched, "Roles"));
+
 
 		if (!rolesValues.isEmpty())
 		{
@@ -174,12 +177,12 @@ public class ProjectDetailWindow extends JPanel
 						selection.add(roleValues);
 
 					prepareRole(role, selection);
+					roles.put(role, ((selection.isEmpty()==true) ? "" : selection.get(0).get(0)));
 
 					role = roleValues.get(0);
 					
 					selection = new ArrayList<ArrayList<String>>();
 				}
-
 				if (roleValues.size() > 1)
 					selection.add(roleValues);
 			}

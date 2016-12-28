@@ -7,6 +7,7 @@ import castboard.view.MasterFrame;
 import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.Date;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -17,6 +18,7 @@ import java.io.InputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 public abstract class CatalogsHandler
@@ -116,6 +118,32 @@ public abstract class CatalogsHandler
 		}
 
 		return set;
+	}
+	public static boolean enter (ArrayList<ArrayList<String>> values, int setType)
+	{
+		boolean wasEntered = false;
+
+		switch (setType)
+		{
+			case TALENT_SET:
+				wasEntered = enterTalent(values);
+
+				break;
+			case PROJECT_SET:
+				wasEntered = enterProject(values);
+
+				break;
+			case SEQUENCE_SET:
+				wasEntered = enterSequence(values);
+
+				break;
+			default:
+				wasEntered = false;
+
+				break;
+		}
+
+		return wasEntered;
 	}
 
 	public static void notifyException (Exception e)
@@ -408,43 +436,45 @@ public abstract class CatalogsHandler
 
 		values.add(inner);
 
-		for (Entry<Category, String> role : project.getRoles().entrySet())
+		for (Entry<Category, ArrayList<String>> role : project.getRoles().entrySet())
 		{
-
-			inner = new ArrayList<String>();
-			
-			inner.add(parse(role));
-
-			values.add(inner);
-
-			if (project.getSelecteds().isEmpty() && !project.getPreselecteds().isEmpty())
+			for (String name : role.getValue())
 			{
-				for (Talent talen : project.getPreselecteds().get(role.getValue()))
+				inner = new ArrayList<String>();
+				
+				inner.add(parse(new SimpleEntry<Category, String>(role.getKey(), name)));
+
+				values.add(inner);
+
+				if (project.getSelecteds().isEmpty() && !project.getPreselecteds().isEmpty())
 				{
+					for (Talent talen : project.getPreselecteds().get(name))
+					{
+						inner = new ArrayList<String>();
+
+						inner.add(Long.toString(talen.getId()));
+						inner.add(parse(talen.getPhotos(), talen.getId())[0]);
+						inner.add(talen.getName());
+						inner.add(parse(talen.getBirthdate()));
+						inner.add(talen.getProfileType().toString());
+
+						values.add(inner);
+					}
+				}
+				else if (!project.getSelecteds().isEmpty())
+				{
+					talent = project.getSelecteds().get(name);
+
 					inner = new ArrayList<String>();
 
-					inner.add(Long.toString(talen.getId()));
-					inner.add(parse(talen.getPhotos(), talen.getId())[0]);
-					inner.add(talen.getName());
-					inner.add(parse(talen.getBirthdate()));
-					inner.add(talen.getProfileType().toString());
-
+					inner.add(Long.toString(talent.getId()));
+					inner.add(parse(talent.getPhotos(), talent.getId())[0]);
+					inner.add(talent.getName());
+					inner.add(parse(talent.getBirthdate()));
+					inner.add(talent.getProfileType().toString());
+					
 					values.add(inner);
 				}
-			}
-			else if (!project.getSelecteds().isEmpty())
-			{
-				talent = project.getSelecteds().get(role.getValue());
-
-				inner = new ArrayList<String>();
-
-				inner.add(Long.toString(talent.getId()));
-				inner.add(parse(talent.getPhotos(), talent.getId())[0]);
-				inner.add(talent.getName());
-				inner.add(parse(talent.getBirthdate()));
-				inner.add(talent.getProfileType().toString());
-				
-				values.add(inner);
 			}
 		}
 		
@@ -530,6 +560,122 @@ public abstract class CatalogsHandler
 		}
 
 		return values;
+	}
+	@Deprecated
+	private static boolean enterTalent (ArrayList<ArrayList<String>> values)
+	{
+		Talent talent = new Talent();
+
+		talent.setBirthdate(new Date());
+
+		talent.setName(values.get(0).get(0));
+		talent.setSurname(values.get(0).get(1));
+		talent.getBirthdate().setDate(Integer.parseInt(values.get(0).get(2)));
+		talent.getBirthdate().setMonth(Integer.parseInt(values.get(0).get(3)) - 1);
+		talent.getBirthdate().setYear(Integer.parseInt(values.get(0).get(4)) - 1900);
+		talent.setSex(Sex.identifierOf(values.get(0).get(5)));
+
+		talent.setSocialNetworks(new TreeMap<String, String>());
+		talent.setAddress(new TreeMap<String, String>());
+
+		talent.setMobilePhone(values.get(1).get(0));
+		talent.setHomePhone(values.get(1).get(1));
+		talent.getSocialNetworks().put("Facebook", values.get(1).get(2));
+		talent.getSocialNetworks().put("Instagram", values.get(1).get(3));
+		talent.getSocialNetworks().put("Twitter", values.get(1).get(4));
+		talent.getAddress().put("Numero", values.get(1).get(5));
+		talent.getAddress().put("Calle", values.get(1).get(6));
+		talent.getAddress().put("Sector", values.get(1).get(7));
+		talent.getAddress().put("Provincia", values.get(1).get(8));
+		talent.setEmail(values.get(1).get(9));
+
+		talent.setPhysique(Physique.identifierOf(values.get(2).get(0)));
+		talent.setSkinTone(SkinTone.identifierOf(values.get(2).get(1)));
+		talent.setStature(parse(values.get(2).get(2), values.get(2).get(3)));
+		talent.setHairTexture(HairTexture.identifierOf(values.get(2).get(4)));
+		talent.setEyeColor(values.get(2).get(5));
+		talent.setProfileType(ProfileType.identifierOf(values.get(2).get(6)));
+		talent.setHairColor(values.get(2).get(7));
+
+		talent.setShirtSize(ShirtSize.identifierOf(values.get(3).get(0)));
+		talent.setPantSize(values.get(3).get(1));
+		talent.setShoeSize(Float.parseFloat((values.get(3).get(2).isEmpty()) ? "0" : values.get(3).get(2)));
+
+		talent.setAcademicLevel(values.get(4).get(0));
+		talent.setHobbies(values.get(4).get(1));
+		talent.setArtisticExperience(values.get(4).get(2));
+		talent.setScheduleAvailable(values.get(4).get(3));
+
+		talent.setArtisticSkills(values.get(5));
+		talent.setDominatedLanguages(values.get(6));
+
+		talent.setPhotos(new TreeMap<String, BufferedImage>());
+		talent.setVideos(new TreeMap<String, InputStream>());
+
+		addPhotoEntry(talent.getPhotos(), "Rostro", parse(Paths.get(values.get(7).get(0))));
+		if (!values.get(7).get(1).equals(" ..."))
+			addPhotoEntry(talent.getPhotos(), "Medio Cuerpo", parse(Paths.get(values.get(7).get(1))));
+		if (!values.get(7).get(2).equals(" ..."))	
+			addPhotoEntry(talent.getPhotos(), "Cuerpo Completo", parse(Paths.get(values.get(7).get(2))));
+		if (!values.get(7).get(3).equals(" ..."))	
+			talent.getVideos().put("Demo",  parse(Paths.get(values.get(7).get(3))));
+
+		return getInterfaceDAL().enter(talent);
+	}
+	private static boolean enterProject (ArrayList<ArrayList<String>> values)
+	{
+		Project project = new Project();
+
+		project.setTitle(values.get(0).get(0));
+		project.setType(Type.identifierOf(values.get(0).get(1)));
+		project.setProducer(values.get(0).get(2));
+		project.setDirector(values.get(0).get(3));
+
+		project.setRoles(new TreeMap<Category, ArrayList<String>>());
+		for (ArrayList<String> roles : new ArrayList<ArrayList<String>>(values.subList(1, values.size())))
+		{
+			if(!project.getRoles().containsKey(Category.identifierOf(roles.get(0))))
+				project.getRoles().put(Category.identifierOf(roles.get(0)), new ArrayList<String>());
+
+			project.getRoles().get(Category.identifierOf(roles.get(0))).add(roles.get(1));
+		}
+
+		return getInterfaceDAL().enter(project);
+	}
+	@Deprecated
+	private static boolean enterSequence (ArrayList<ArrayList<String>> values)
+	{
+		CinemaProject cinema = new CinemaProject();
+		Sequence sequence = new Sequence();
+
+		sequence.setFilmingDate(new Date());
+
+		cinema.setId(Long.parseLong(values.get(0).get(0)));
+		sequence.setNumber(Integer.parseInt(values.get(0).get(1)));
+		sequence.getFilmingDate().setDate(Integer.parseInt(values.get(0).get(2)));
+		sequence.getFilmingDate().setMonth(Integer.parseInt(values.get(0).get(3)) - 1);
+		sequence.getFilmingDate().setYear(Integer.parseInt(values.get(0).get(4)) - 1900);
+		sequence.setLocation(values.get(0).get(5));
+		sequence.setDescription(values.get(0).get(6));
+
+		sequence.setLocationType(LocationType.identifierOf(values.get(1).get(0)));
+		sequence.setDayMoment(DayMoment.identifierOf(values.get(1).get(1)));
+		sequence.setScriptPage(Integer.parseInt(values.get(1).get(2)));
+		sequence.setScriptDay(Integer.parseInt(values.get(1).get(3)));
+
+		sequence.setSelecteds(new TreeMap<String, Talent>());
+		for (ArrayList<String> selecteds : new ArrayList<ArrayList<String>>(values.subList(2, values.size())))
+		{
+			if(!sequence.getSelecteds().containsKey(selecteds.get(0)))
+				sequence.getSelecteds().put(selecteds.get(0), new Talent());
+
+			sequence.getSelecteds().get(selecteds.get(0)).setId(Long.parseLong(selecteds.get(1)));
+		}
+
+		cinema.setSequences(new ArrayList<Sequence>());
+		cinema.getSequences().add(sequence);
+
+		return getInterfaceDAL().enter(cinema);
 	}
 
 	public static boolean remove (String id)
@@ -647,6 +793,19 @@ public abstract class CatalogsHandler
 	public static InputStream parse (byte[] bytes)
 	{
 		return new ByteArrayInputStream(bytes);
+	}
+	private static InputStream parse (Path path)
+	{
+		try
+		{
+			return parse(Files.readAllBytes(path));
+		}
+		catch (IOException e) 
+		{
+			e.printStackTrace();
+
+			return null;
+		}
 	}
 	private static String[] parse (TreeMap<String,InputStream> videos, String id)
 	{

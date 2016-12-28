@@ -45,6 +45,7 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.TreeMap;
 import java.beans.PropertyChangeEvent;
 
 public class MasterFrame extends JFrame
@@ -158,10 +159,30 @@ public class MasterFrame extends JFrame
 			public void actionPerformed (ActionEvent e)
 			{
 				if (isConnected)
-					{}//TODO call talent entry window}
+				{
+					boolean isUnique = true;
+
+					for (JLabel lblLink : links)
+					{
+						if (lblLink.getText().equals(" \u25B8Ingreso de Talento"))
+						{
+							isUnique = false;
+							break;
+						}
+					}
+
+					if (isUnique)
+						displayTalentEntry();
+					else if (getInstance().getTitle().equals("Ingreso de Talento - CastBoard"))
+						(new CautionPopUp(getInstance())).display("Ya se encuentra en el ingreso de " +
+																  "talento");
+					else
+						(new CautionPopUp(getInstance())).display("Regrese al ingreso de talento " + 
+																  "mediante la barra de navegación");
+				}
 				else
 					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder al " +
-														   "ingreso");
+														   	  "ingreso");
 			}
 		});
 		mniProjectEntry.addActionListener(new ActionListener()
@@ -169,9 +190,29 @@ public class MasterFrame extends JFrame
 			public void actionPerformed (ActionEvent e)
 			{
 				if (isConnected)
-					{}//TODO call project entry window
+				{
+					boolean isUnique = true;
+
+					for (JLabel lblLink : links)
+					{
+						if (lblLink.getText().equals(" \u25B8Ingreso de Proyecto"))
+						{
+							isUnique = false;
+							break;
+						}
+					}
+
+					if (isUnique)
+						displayProjectEntry();
+					else if (getInstance().getTitle().equals("Ingreso de Proyecto - CastBoard"))
+						(new CautionPopUp(getInstance())).display("Ya se encuentra en el ingreso de " +
+																  "proyecto");
+					else
+						(new CautionPopUp(getInstance())).display("Regrese al ingreso de proyecto " +
+																  "mediante la barra de navegación");
+				}
 				else
-					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder al " +
+					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder al " + 
 														   "ingreso");
 			}
 		});
@@ -361,6 +402,28 @@ public class MasterFrame extends JFrame
 			this.setTitle(title + " - CastBoard");
 		}
 	}
+	public void displaySequenceBreakdown (String id, TreeMap<String, String> roles)
+	{
+		SequenceBreakdownWindow sequenceBreakdown;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			sequenceBreakdown = new SequenceBreakdownWindow(id, roles);
+			scrollTop();
+			title = "Desglose de Secuencias";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(sequenceBreakdown, title);
+			windows.add(sequenceBreakdown);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
 	public void displayTalentSearch ()
 	{
 		TalentSearchWindow talentSearch;
@@ -449,28 +512,6 @@ public class MasterFrame extends JFrame
 			this.setTitle(title + " - CastBoard");
 		}
 	}
-	public void displaySequenceBreakdown (String id)
-	{
-		SequenceBreakdownWindow sequenceBreakdown;
-		String title;
-		CardLayout lytCard;
-
-		if (isConnected)
-		{
-			sequenceBreakdown = new SequenceBreakdownWindow(id);
-			scrollTop();
-			title = "Desglose de Secuencias";
-			lytCard = (CardLayout) pnlBody.getLayout();
-
-			pnlBody.add(sequenceBreakdown, title);
-			windows.add(sequenceBreakdown);
-
-			lytCard.show(pnlBody, title);
-
-			pushLblLink(title);
-			this.setTitle(title + " - CastBoard");
-		}
-	}
 	public void displaySequenceDetail (String id, String pTitle)
 	{
 		SequenceDetailWindow sequenceDetail;
@@ -486,6 +527,72 @@ public class MasterFrame extends JFrame
 
 			pnlBody.add(sequenceDetail, title);
 			windows.add(sequenceDetail);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayTalentEntry ()
+	{
+		TalentEntryWindow talentEntry;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			talentEntry = new TalentEntryWindow();
+			scrollTop();
+			title = "Ingreso de Talento";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(talentEntry, title);
+			windows.add(talentEntry);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayProjectEntry ()
+	{
+		ProjectEntryWindow projectEntry;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			projectEntry = new ProjectEntryWindow();
+			scrollTop();
+			title = "Ingreso de Proyecto";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(projectEntry, title);
+			windows.add(projectEntry);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displaySequenceEntry (String pId, TreeMap<String, String> roles)
+	{
+		SequenceEntryWindow sequenceEntry;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			sequenceEntry = new SequenceEntryWindow(pId, roles);
+			scrollTop();
+			title = "Creación de Secuencias";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(sequenceEntry, title);
+			windows.add(sequenceEntry);
 
 			lytCard.show(pnlBody, title);
 

@@ -22,6 +22,7 @@ import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 public class SequenceBreakdownWindow extends JPanel
 {
@@ -31,7 +32,7 @@ public class SequenceBreakdownWindow extends JPanel
 	private SetWindow pnlSequences;
 	private ArrayList<ArrayList<String>> values;
 
-	public SequenceBreakdownWindow (String id)
+	public SequenceBreakdownWindow (String id, TreeMap<String, String> roles)
 	{
 		masterFrame = MasterFrame.getInstance();
 		SequenceBreakdownWindow breakdown = this;
@@ -43,7 +44,7 @@ public class SequenceBreakdownWindow extends JPanel
 				values = CatalogsHandler.get(id, CatalogsHandler.CINEMA_SET);
 				
 				createPnlTitle();
-				createPnlActions();
+				createPnlActions(id, roles);
 				createPnlSequences(values.get(0).get(0));
 
 				return null;
@@ -79,7 +80,7 @@ public class SequenceBreakdownWindow extends JPanel
 
 		pnlTitle.add(lblTitle);
 	}
-	private void createPnlActions ()
+	private void createPnlActions (String id, TreeMap<String, String> roles)
 	{
 		JButton btnCreateSequence = new JButton("Crear secuencia");
 
@@ -92,7 +93,7 @@ public class SequenceBreakdownWindow extends JPanel
 		{
 			public void actionPerformed (ActionEvent e)
 			{
-				//masterFrame.displayTalentUpdate(values);
+				masterFrame.displaySequenceEntry(id, roles);
 			}
 		});
 

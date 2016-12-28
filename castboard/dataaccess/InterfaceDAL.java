@@ -17,6 +17,7 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.AbstractMap.SimpleEntry;
 import java.io.InputStream;
+import java.awt.image.BufferedImage;
 
 public class InterfaceDAL
 {
@@ -573,7 +574,8 @@ public class InterfaceDAL
 							  "WHERE p.id=?";
 		String queryRoles = "SELECT * " +
 							"FROM ProjectsRoles AS pr " +
-							"WHERE pr.projectId=?";
+							"WHERE pr.projectId=? " +
+							"ORDER BY pr.category";
 		String queryTalents = "SELECT pr.name, t.id, tp.photo, t.name, t.birthdate, t.profileType " +
 							  "FROM ProposedTalents AS pt, ProjectsRoles AS pr, Talents AS t, " +
 							  "TalentsPhotos AS tp " +
@@ -605,10 +607,14 @@ public class InterfaceDAL
 
 			result = statement.executeQuery();
 
-			thumbnail.setRoles(new TreeMap<Category, String>());
+			thumbnail.setRoles(new TreeMap<Category, ArrayList<String>>());
 			while (result.next())
 			{
-				thumbnail.getRoles().put(Category.identifierOf(result.getString("category")), result.getString("name"));
+				if (!thumbnail.getRoles().containsKey(Category.identifierOf(result.getString("category"))))
+					thumbnail.getRoles().put(Category.identifierOf(result.getString("category")), 
+																   new ArrayList<String>());
+
+				thumbnail.getRoles().get(Category.identifierOf(result.getString("category"))).add(result.getString("name"));
 			}
 
 			statement = connection.prepareStatement(queryTalents);
@@ -772,6 +778,341 @@ public class InterfaceDAL
 		}
 
 		return thumbnail;
+	}
+
+	public boolean enter (Talent talent)
+	{
+		Statement statement;
+		PreparedStatement pStatement;
+		ResultSet result;
+		boolean wasEntered = false;
+
+		String insertItem = "INSERT INTO Items(creationDate, isSuppressed) " +
+							"VALUES (DEFAULT, DEFAULT)";
+		String queryId = "SELECT MAX(id) FROM Items";
+		String insertTalent = "INSERT INTO Talents(id, name, surname, birthdate, sex, email, " + 
+												   "physique, stature, skinTone, hairTexture, " +
+												   "hairColor, eyeColor, profileType, shirtSize, " +
+												   "pantsSize, shoeSize, academicLevel, hobbies, " +
+												   "scheduleAvailable, artisticExperience, status) " +
+							   "VALUES ((" + queryId + "), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " +
+							   		   "?, ?, ?, ?, ?, ?, DEFAULT)";
+		String insertAddress = "INSERT INTO TalentsAddresses(talentId, num, street, neighborhood, city) " +
+							   "VALUES ((" + queryId + "), ?, ?, ?, ?)";
+		String insertNetworks = "INSERT INTO TalentsSocialNetworks(talentId, network, account) " +
+							    "VALUES ((" + queryId + "), ?, ?)";
+		String insertPhones = "INSERT INTO TalentsPhones(talentId, num, type) " +
+							   "VALUES ((" + queryId + "), ?, ?)";
+		String insertSkills = "INSERT INTO TalentsArtisticSkills(talentId, skill) " +
+							  "VALUES ((" + queryId + "), ?)";
+		String insertLanguages = "INSERT INTO TalentsDominatedLanguages(talentId, language) " +
+							    "VALUES ((" + queryId + "), ?)";
+		String insertPhotos = "INSERT INTO TalentsPhotos(talentId, name, photo) " +
+							    "VALUES ((" + queryId + "), ?, ?)";
+		String insertVideos = "INSERT INTO TalentsVideos(talentId, name, video) " +
+							    "VALUES ((" + queryId + "), ?, ?)";
+		String query = "SELECT MAX(id) FROM Talents WHERE name=? AND birthdate=?";
+
+		try
+		{
+			statement = connection.createStatement();
+			pStatement = connection.prepareStatement(insertTalent);
+
+			pStatement.setString(1, talent.getName());
+			pStatement.setString(2, talent.getSurname());
+			pStatement.setDate(3, (new Date(talent.getBirthdate().getTime())));
+			pStatement.setString(4, talent.getSex().toString());
+			pStatement.setString(5, talent.getEmail());
+			pStatement.setString(6, talent.getPhysique().toString());
+			pStatement.setFloat(7, talent.getStature());
+			pStatement.setString(8, talent.getSkinTone().toString());
+			pStatement.setString(9, talent.getHairTexture().toString());
+			pStatement.setString(10, talent.getHairColor());
+			pStatement.setString(11, talent.getEyeColor());
+			pStatement.setString(12, talent.getProfileType().toString());
+			pStatement.setString(13, talent.getShirtSize().toString());
+			pStatement.setString(14, talent.getPantSize());
+			pStatement.setFloat(15, talent.getShoeSize());
+			pStatement.setString(16, talent.getAcademicLevel());
+			pStatement.setString(17, talent.getHobbies());
+			pStatement.setString(18, talent.getScheduleAvailable());
+			pStatement.setString(19, talent.getArtisticExperience());
+
+			connection.setAutoCommit(false);
+
+			statement.executeUpdate(insertItem);
+			pStatement.executeUpdate();
+
+			pStatement = connection.prepareStatement(insertAddress);
+
+			pStatement.setString(1, talent.getAddress().get("Numero"));
+			pStatement.setString(2, talent.getAddress().get("Calle"));
+			pStatement.setString(3, talent.getAddress().get("Sector"));
+			pStatement.setString(4, talent.getAddress().get("Provincia"));
+
+			pStatement.executeUpdate();
+
+			pStatement = connection.prepareStatement(insertNetworks);
+
+			for (Entry<String, String> network : talent.getSocialNetworks().entrySet())
+			{
+				pStatement.setString(1, network.getKey());
+				pStatement.setString(2, network.getValue());
+
+				pStatement.executeUpdate();
+			}
+
+			pStatement = connection.prepareStatement(insertPhones);
+
+			pStatement.setString(1, talent.getMobilePhone());
+			pStatement.setString(2, "M");
+
+			pStatement.executeUpdate();
+
+			//pStatement = connection.prepareStatement(insertPhones);
+
+			pStatement.setString(1, talent.getHomePhone());
+			pStatement.setString(2, "F");
+
+			pStatement.executeUpdate();
+
+			pStatement = connection.prepareStatement(insertSkills);
+
+			for (String skill : talent.getArtisticSkills())
+			{
+				pStatement.setString(1, skill);
+
+				pStatement.executeUpdate();
+			}
+
+			pStatement = connection.prepareStatement(insertLanguages);
+
+			for (String language : talent.getDominatedLanguages())
+			{
+				pStatement.setString(1, language);
+
+				pStatement.executeUpdate();
+			}
+
+			pStatement = connection.prepareStatement(insertPhotos);
+
+			for (Entry<String, BufferedImage> photo : talent.getPhotos().entrySet())
+			{
+				pStatement.setString(1, photo.getKey());
+				pStatement.setBlob(2, CatalogsHandler.parse(photo.getValue()));
+
+				pStatement.executeUpdate();
+			}
+
+			pStatement = connection.prepareStatement(insertVideos);
+
+			for (Entry<String, InputStream> video : talent.getVideos().entrySet())
+			{
+				pStatement.setString(1, video.getKey());
+				pStatement.setBlob(2, video.getValue());
+
+				pStatement.executeUpdate();
+			}
+
+			connection.commit();
+			connection.setAutoCommit(true);
+
+			pStatement = connection.prepareStatement(query);
+
+			pStatement.setString(1, talent.getName());
+			pStatement.setDate(2, (new Date(talent.getBirthdate().getTime())));
+
+			result = pStatement.executeQuery();
+
+			wasEntered = result.next();
+
+			statement.close();
+			pStatement.close();
+			result.close();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+
+			try
+			{
+				connection.rollback();
+				connection.setAutoCommit(true);
+			}
+			catch (SQLException ex) 
+			{
+				ex.printStackTrace();
+				return false;
+			}
+
+			return false;
+		}
+
+		return wasEntered;
+	}
+	public boolean enter (Project project)
+	{
+		Statement statement;
+		PreparedStatement pStatement;
+		ResultSet result;
+		boolean wasEntered = false;
+
+		String insertItem = "INSERT INTO Items(creationDate, isSuppressed) " +
+							"VALUES (DEFAULT, DEFAULT)";
+		String queryId = "SELECT MAX(id) FROM Items";
+		String insertProject = "INSERT INTO Projects(id, title, type, producer, director, state) " +
+							   "VALUES ((" + queryId + "), ?, ?, ?, ?, DEFAULT)";
+		String insertRoles = "INSERT INTO ProjectsRoles(projectId, category, name) " +
+							   "VALUES ((" + queryId + "), ?, ?)";
+		String query = "SELECT MAX(id) FROM Projects WHERE title=? AND type=?";
+
+		try
+		{
+			statement = connection.createStatement();
+			pStatement = connection.prepareStatement(insertProject);
+
+			pStatement.setString(1, project.getTitle());
+			pStatement.setString(2, project.getType().toString());
+			pStatement.setString(3, project.getProducer());
+			pStatement.setString(4, project.getDirector());
+
+			connection.setAutoCommit(false);
+
+			statement.executeUpdate(insertItem);
+			pStatement.executeUpdate();
+
+			pStatement = connection.prepareStatement(insertRoles);
+			for (Entry<Category, ArrayList<String>> role : project.getRoles().entrySet())
+			{
+				for (String name : role.getValue())
+				{
+					pStatement.setString(1, role.getKey().toString());
+					pStatement.setString(2, name);
+
+					pStatement.executeUpdate();
+				}
+			}
+
+			connection.commit();
+			connection.setAutoCommit(true);
+
+			pStatement = connection.prepareStatement(query);
+
+			pStatement.setString(1, project.getTitle());
+			pStatement.setString(2, project.getType().toString());
+
+			result = pStatement.executeQuery();
+
+			wasEntered = result.next();
+
+			statement.close();
+			pStatement.close();
+			result.close();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+
+			try
+			{
+				connection.rollback();
+				connection.setAutoCommit(true);
+			}
+			catch (SQLException ex) 
+			{
+				ex.printStackTrace();
+				return false;
+			}
+
+			return false;
+		}
+
+		return wasEntered;
+	}
+	public boolean enter (CinemaProject cinema)
+	{
+		Statement statement;
+		PreparedStatement pStatement;
+		ResultSet result;
+		boolean wasEntered = false;
+		Sequence sequence = cinema.getSequences().get(0);
+
+		String insertItem = "INSERT INTO Items(creationDate, isSuppressed) " +
+							"VALUES (DEFAULT, DEFAULT)";
+		String queryId = "SELECT MAX(id) FROM Items";
+		String insertSequence = "INSERT INTO Sequences(id, projectId, num, description, filmingDate, " +
+								"locationType, location, dayMoment, scriptPage, scriptDay) " +
+							   "VALUES ((" + queryId + "), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		String queryRole = "SELECT id FROM ProjectsRoles WHERE projectId=? AND name=?";
+		String insertSelecteds = "INSERT INTO SequencesTalents(sequenceId, roleId, talentId) " +
+							   "VALUES ((" + queryId + "), (" + queryRole +"), ?)";
+		String query = "SELECT MAX(id) FROM Sequences WHERE num=? AND projectId=?";
+
+		try
+		{
+			statement = connection.createStatement();
+			pStatement = connection.prepareStatement(insertSequence);
+
+			pStatement.setLong(1, cinema.getId());
+			pStatement.setInt(2, sequence.getNumber());
+			pStatement.setString(3, sequence.getDescription());
+			pStatement.setDate(4, (new Date(sequence.getFilmingDate().getTime())));
+			pStatement.setString(5, sequence.getLocationType().toString());
+			pStatement.setString(6, sequence.getLocation());
+			pStatement.setString(7, sequence.getDayMoment().toString());
+			pStatement.setInt(8, sequence.getScriptPage());
+			pStatement.setInt(9, sequence.getScriptDay());
+
+			connection.setAutoCommit(false);
+
+			statement.executeUpdate(insertItem);
+			pStatement.executeUpdate();
+
+			pStatement = connection.prepareStatement(insertSelecteds);
+			for (Entry<String, Talent> selected : sequence.getSelecteds().entrySet())
+			{	
+				pStatement.setLong(1, cinema.getId());
+				pStatement.setString(2, selected.getKey());
+				pStatement.setLong(3, selected.getValue().getId());
+
+				pStatement.executeUpdate();
+			}
+
+			connection.commit();
+			connection.setAutoCommit(true);
+
+			pStatement = connection.prepareStatement(query);
+
+			pStatement.setLong(1, sequence.getNumber());
+			pStatement.setLong(2, cinema.getId());
+
+			result = pStatement.executeQuery();
+
+			wasEntered = result.next();
+
+			statement.close();
+			pStatement.close();
+			result.close();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+
+			try
+			{
+				connection.rollback();
+				connection.setAutoCommit(true);
+			}
+			catch (SQLException ex) 
+			{
+				ex.printStackTrace();
+				return false;
+			}
+
+			return false;
+		}
+
+		return wasEntered;
 	}
 
 	public boolean suppress (long id)

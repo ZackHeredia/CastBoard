@@ -11,7 +11,7 @@ public class Project extends Item
 	private Type type;
 	private String producer;
 	private String director;
-	private TreeMap<Category, String> roles;
+	private TreeMap<Category, ArrayList<String>> roles;
 	private TreeMap<String, ArrayList<Talent>> preselecteds;
 	private TreeMap<String, Talent> selecteds;
 	private State state;
@@ -34,7 +34,7 @@ public class Project extends Item
 	{
 		this.director = director;
 	}
-	public void setRoles (TreeMap<Category, String> roles)
+	public void setRoles (TreeMap<Category, ArrayList<String>> roles)
 	{
 		this.roles = roles;
 	}
@@ -67,7 +67,7 @@ public class Project extends Item
 	{
 		return director;
 	}
-	public TreeMap<Category, String> getRoles ()
+	public TreeMap<Category, ArrayList<String>> getRoles ()
 	{
 		return roles;
 	}
