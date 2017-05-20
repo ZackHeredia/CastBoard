@@ -24,17 +24,26 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
-public class SequenceBreakdownWindow extends JPanel
+public class SequenceBreakdownWindow extends Window
 {
-	private MasterFrame masterFrame;
 	private JPanel pnlTitle;
 	private JPanel pnlActions;
 	private SetWindow pnlSequences;
 	private ArrayList<ArrayList<String>> values;
+	private String id;
+	private TreeMap<String, String> roles;
 
 	public SequenceBreakdownWindow (String id, TreeMap<String, String> roles)
 	{
 		masterFrame = MasterFrame.getInstance();
+		this.id = id;
+		this.roles = roles;
+		
+		init();
+	}
+
+	protected void init ()
+	{
 		SequenceBreakdownWindow breakdown = this;
 		
 		SwingWorker worker = new SwingWorker<Void, Void>()
@@ -67,6 +76,7 @@ public class SequenceBreakdownWindow extends JPanel
 
 		masterFrame.startWaitingLayer();
 	}
+
 	private void createPnlTitle ()
 	{
 		JLabel lblTitle = new JLabel("<html><h1>" + values.get(0).get(0) + "</h1></html>");

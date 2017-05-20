@@ -32,14 +32,25 @@ public class PetitionPopUp extends PopUp
 	
 	public void optionSelected (int option) 
 	{
-		Component[] components = pnlForm.getComponents();
-		
-		for (int i = 0; i < components.length; i++)
+		Component[] components;
+
+		if (option == JOptionPane.OK_OPTION)
 		{
-			if (components[i].getClass().equals(JComboBox.class))
-				values[i] = (String) ((JComboBox) components[i]).getSelectedItem();
-			else
-				values[i] = ((JTextField) components[i]).getText();
+			components = pnlForm.getComponents();
+			values = new String[components.length];
+			
+			for (int i = 0; i < components.length; i++)
+			{
+				if (((JPanel) components[i]).getComponents()[1] instanceof JComboBox)
+					values[i] = (String) ((JComboBox) ((JPanel) components[i]).getComponents()[1]).getSelectedItem();
+				else
+					values[i] = ((JTextField) ((JPanel) components[i]).getComponents()[1]).getText();
+			}
+		}
+		else
+		{
+			values = new String[1];
+			values[0] = null;
 		}
 	}
 }

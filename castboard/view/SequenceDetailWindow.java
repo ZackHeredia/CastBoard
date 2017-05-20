@@ -21,19 +21,27 @@ import java.awt.GridLayout;
 import java.awt.Component;
 import java.util.ArrayList;
 
-public class SequenceDetailWindow extends JPanel
+public class SequenceDetailWindow extends Window
 {
-	private MasterFrame masterFrame;
 	private JPanel pnlHead;
 	private JPanel pnlContent;
 	private JPanel pnlRoles;
 	private ArrayList<ArrayList<String>> values;
 	private String id;
+	private String title;
 
 	public SequenceDetailWindow (String id, String title)
 	{
 		this.id = id;
+		this.title = title;
+		
 		masterFrame = MasterFrame.getInstance();
+		
+		init();
+	}
+
+	protected void init ()
+	{
 		SequenceDetailWindow detail = this;
 		
 		SwingWorker worker = new SwingWorker<Void, Void>()
@@ -67,6 +75,7 @@ public class SequenceDetailWindow extends JPanel
 
 		masterFrame.startWaitingLayer();
 	}
+
 	private void createPnlHead (String title)
 	{
 		JLabel lblTitle = new JLabel("<html><h1>" + title + "</h1></html>");
@@ -135,7 +144,6 @@ public class SequenceDetailWindow extends JPanel
 		String role = (rolesValues.isEmpty()) ? null : rolesValues.get(0).get(0);
 		
 		pnlRoles = new JPanel();
-		pnlRoles.setLayout(new BoxLayout(pnlRoles, BoxLayout.Y_AXIS));
 		pnlRoles.setBorder(BorderFactory.createTitledBorder(etched, "Roles"));
 
 		if (!rolesValues.isEmpty())
@@ -196,7 +204,7 @@ public class SequenceDetailWindow extends JPanel
 			protected void createPnlGrid ()
 			{
 				pnlGrid = new JPanel();
-				pnlGrid.setLayout(new GridLayout(0, THUMBNAIL_COL, 4, 4));
+				pnlGrid.setLayout(new GridLayout(1, THUMBNAIL_COL, 4, 4));
 			}
 
 			public void createSet ()
@@ -204,7 +212,7 @@ public class SequenceDetailWindow extends JPanel
 				createPnlGrid();
 				createPnlNavigation();
 
-				this.setPreferredSize(new Dimension(132, 196));
+				this.setPreferredSize(new Dimension(164, 240));
 
 				this.add(pnlGrid);
 				this.add(pnlNavigation);
@@ -223,7 +231,31 @@ public class SequenceDetailWindow extends JPanel
 
 			public void fillPnlGrid ()
 			{
-				super.fillPnlGrid();
+				int counter = 0;
+
+				pnlGrid.removeAll();
+
+				try
+				{
+					for (int i = indexAcum; i < (indexAcum + THUMBNAIL_MAX); i++)
+					{
+						pnlGrid.add(thumbnails.get(i));
+						counter++;
+					}
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace(); 
+				}
+				finally
+				{
+					indexAcum += counter;
+
+					pnlGrid.revalidate();
+					this.repaint();
+				}
+
+				pnlGrid.setPreferredSize(pnlGrid.getPreferredSize());
 			}
 		};
 

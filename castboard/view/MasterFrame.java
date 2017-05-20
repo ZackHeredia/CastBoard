@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.beans.PropertyChangeEvent;
+import javafx.application.Platform;
 
 public class MasterFrame extends JFrame
 {
@@ -60,7 +61,7 @@ public class MasterFrame extends JFrame
 	private boolean isConnected;
 
 	private ArrayList<JLabel> links;
-	private ArrayList<JPanel> windows;
+	private ArrayList<Window> windows;
 
 	private static MasterFrame instance = null;
 
@@ -69,7 +70,7 @@ public class MasterFrame extends JFrame
 		super("CastBoard");
 
 		links = new ArrayList<JLabel>();
-		windows = new ArrayList<JPanel>();
+		windows = new ArrayList<Window>();
 
 		createMnbActions();
 		createTlbNavigation();
@@ -134,7 +135,7 @@ public class MasterFrame extends JFrame
 			public void menuSelected (MenuEvent e)
 			{
 				if (isConnected)
-					{}//TODO call bin window}
+					displayWasteBasket();
 				else
 					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder a la" +
 														   " papelera");
@@ -445,6 +446,27 @@ public class MasterFrame extends JFrame
 			pushLblLink(title);
 			this.setTitle(title + " - CastBoard");
 		}
+	}public void displayTalentSearch (String projectId, String roleName)
+	{
+		TalentSearchWindow talentSearch;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			talentSearch = new TalentSearchWindow(projectId, roleName);
+			scrollTop();
+			title = "Búsqueda de Talentos";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(talentSearch, title);
+			windows.add(talentSearch);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
 	}
 	public void displayProjectSearch ()
 	{
@@ -477,6 +499,27 @@ public class MasterFrame extends JFrame
 		if (isConnected)
 		{
 			talentDetail = new TalentDetailWindow(id);
+			scrollTop();
+			title = "Detalle de Talento";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(talentDetail, title);
+			windows.add(talentDetail);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}public void displayTalentDetail (String id, String projectId, String roleName)
+	{
+		TalentDetailWindow talentDetail;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			talentDetail = new TalentDetailWindow(id, projectId, roleName);
 			scrollTop();
 			title = "Detalle de Talento";
 			lytCard = (CardLayout) pnlBody.getLayout();
@@ -600,6 +643,72 @@ public class MasterFrame extends JFrame
 			this.setTitle(title + " - CastBoard");
 		}
 	}
+	public void displayTalentUpdate (String id, ArrayList<ArrayList<String>> values)
+	{
+		TalentUpdateWindow talentUpdate;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			talentUpdate = new TalentUpdateWindow(id, values);
+			scrollTop();
+			title = "Actualización de Talento";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(talentUpdate, title);
+			windows.add(talentUpdate);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayProjectUpdate (String id, ArrayList<ArrayList<String>> values)
+	{
+		ProjectUpdateWindow projectUpdate;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			projectUpdate = new ProjectUpdateWindow(id, values);
+			scrollTop();
+			title = "Actualización de Proyecto";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(projectUpdate, title);
+			windows.add(projectUpdate);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
+	public void displayWasteBasket ()
+	{
+		WasteBasketWindow wasteBasket;
+		String title;
+		CardLayout lytCard;
+
+		if (isConnected)
+		{
+			wasteBasket = new WasteBasketWindow();
+			scrollTop();
+			title = "Papelera";
+			lytCard = (CardLayout) pnlBody.getLayout();
+
+			pnlBody.add(wasteBasket, title);
+			windows.add(wasteBasket);
+
+			lytCard.show(pnlBody, title);
+
+			pushLblLink(title);
+			this.setTitle(title + " - CastBoard");
+		}
+	}
 	public void displayException (String message)
 	{
 		(new ExceptionPopUp(this)).display(message);
@@ -673,7 +782,7 @@ public class MasterFrame extends JFrame
 			this.repaint();
 		}
 	}
-	public void popLblLinks (JLabel lblLink)
+	private void popLblLinks (JLabel lblLink)
 	{
 		int fromIndex = links.indexOf(lblLink) + 1;
 		int toIndex = links.size();
@@ -709,17 +818,41 @@ public class MasterFrame extends JFrame
 		link.setForeground(Color.BLACK);
 	}
 
-	public void popWindows (JPanel window)
+	private void popWindows (Window window)
 	{
 		int fromIndex = windows.indexOf(window) + 1;
 		int toIndex = windows.size();
-		ArrayList<JPanel> popWindows = new ArrayList<JPanel>(windows.subList(fromIndex, toIndex));
+		ArrayList<Window> popWindows = new ArrayList<Window>(windows.subList(fromIndex, toIndex));
 
 		for (int i = 0; i < popWindows.size(); i++)
 		{
+			popWindows.get(i).close();
 			pnlBody.remove(popWindows.get(i));
 		}
 		windows.removeAll(popWindows);
+		windows.get(windows.size() - 1).reload();
+	}
+	public void previousWindow(Window window)
+	{
+		CardLayout lytCard = (CardLayout) pnlBody.getLayout();
+
+		lytCard.previous(pnlBody);
+
+		popLblLinks(links.get(windows.indexOf(window)-1));
+		popWindows(windows.get(windows.indexOf(window)-1));
+
+		unstyleLink(links.get(links.size()-1));
+	}
+	public void goBackWindows(Window window, int stepsBack)
+	{
+		CardLayout lytCard = (CardLayout) pnlBody.getLayout();
+
+		lytCard.show(pnlBody, links.get(windows.indexOf(window) - stepsBack).getText().substring(2));
+
+		popLblLinks(links.get(windows.indexOf(window)-stepsBack));
+		popWindows(windows.get(windows.indexOf(window)-stepsBack));
+
+		unstyleLink(links.get(links.size()-1));
 	}
 	
 	public void logIn()
@@ -871,6 +1004,68 @@ public class MasterFrame extends JFrame
 
 		return thumbnails;
 	}
+	public ArrayList<JButton> makeTalentThumbnails (ArrayList<ArrayList<String>> talents, String projectId, String roleName)
+	{
+		ArrayList<JButton> thumbnails = new ArrayList<JButton>();
+		JButton thumbnail;
+		JPanel photoWrapper;
+		JLabel photo;
+		JPanel list;
+		JLabel name;
+		JLabel age;
+		JLabel profileType;
+
+		for (ArrayList<String> talent : talents)
+		{
+			thumbnail = new JButton("");
+			thumbnail.setLayout(new BoxLayout(thumbnail, BoxLayout.Y_AXIS));
+			thumbnail.setPreferredSize(new Dimension(132, 196));
+
+			photoWrapper = new JPanel();
+			photoWrapper.setLayout(new BorderLayout());
+			// photoWrapper.setPreferredSize(new Dimension(128, 128));
+			// photoWrapper.setBorder(BorderFactory.createLineBorder(Color.black));
+			// photoWrapper.setBackground(new Color(210, 210, 210));
+
+			list = new JPanel();
+			list.setLayout(new BorderLayout());
+			list.setOpaque(false);
+
+			thumbnail.setName(talent.get(0));
+			photo = new JLabel(scale((new ImageIcon(talent.get(1))), 128, 128));
+			name = new JLabel("\u2022 " + talent.get(2));
+			age = new JLabel("\u2022 " + talent.get(3));
+			profileType = new JLabel("\u2022 " + talent.get(4));
+
+			thumbnail.setToolTipText("Ver detalle del talento");
+			photoWrapper.setToolTipText("Foto");
+			name.setToolTipText("Nombre");
+			age.setToolTipText("Edad");
+			profileType.setToolTipText("Tipo de perfil");
+
+			photoWrapper.add(photo);
+
+			list.add(name, BorderLayout.NORTH);
+			list.add(age, BorderLayout.CENTER);
+			list.add(profileType, BorderLayout.SOUTH);
+
+			thumbnail.add(photoWrapper);
+			thumbnail.add(list);
+
+			thumbnail.addActionListener(new ActionListener()
+			{
+				public void actionPerformed (ActionEvent e)
+				{
+					String id = ((JButton) e.getSource()).getName();
+					displayTalentDetail(id, projectId, roleName);
+				}
+			});
+
+			thumbnails.add(thumbnail);
+		}
+
+		return thumbnails;
+	}
 	public ArrayList<JButton> makeSequenceThumbnails (ArrayList<ArrayList<String>> sequences, String title)
 	{
 		ArrayList<JButton> thumbnails = new ArrayList<JButton>();
@@ -979,12 +1174,14 @@ public class MasterFrame extends JFrame
 			if (isConfirmed)
 			{	
 				CatalogsHandler.disconnect();
+				Platform.exit();
 				getInstance().dispose();
 				System.exit(0);
 			}
 		}
 		else
 		{
+			Platform.exit();
 			getInstance().dispose();
 			System.exit(0);
 		}

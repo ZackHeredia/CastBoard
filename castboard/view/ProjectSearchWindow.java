@@ -20,9 +20,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-public class ProjectSearchWindow extends JPanel
+public class ProjectSearchWindow extends Window
 {
-	private MasterFrame masterFrame;
 	private JPanel pnlSearchForm;
 	private SetWindow pnlMatches;
 	private JTextField txtTitle;
@@ -33,6 +32,12 @@ public class ProjectSearchWindow extends JPanel
 	public ProjectSearchWindow ()
 	{
 		masterFrame = MasterFrame.getInstance();
+		
+		init();
+	}
+
+	protected void init ()
+	{
 		ProjectSearchWindow search = this;
 		
 		SwingWorker worker = new SwingWorker<Void, Void>()
@@ -60,7 +65,7 @@ public class ProjectSearchWindow extends JPanel
 
 		masterFrame.startWaitingLayer();
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	private void createPnlSearchForm ()
 	{

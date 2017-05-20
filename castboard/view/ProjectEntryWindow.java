@@ -26,26 +26,38 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.util.ArrayList;
 
-public class ProjectEntryWindow extends JPanel
+public class ProjectEntryWindow extends Window
 {
-	private MasterFrame masterFrame;
 	private JPanel pnlGenerals;
 	private JPanel pnlOuterRoles;
 	private JPanel pnlRoles;
 	private JPanel pnlBottom;
-	private JButton btnEnter;
-	private ArrayList<Component> generalInputs;
-	private ArrayList<Component> roleInputs;
-	private String requireMark;
+	protected JButton btnEnter;
+	protected ArrayList<Component> generalInputs;
+	protected ArrayList<Component> roleInputs;
+	protected String requireMark;
 	private int filledCounter;
 
+	protected final String ACTION;
+
 	public ProjectEntryWindow ()
+	{
+		this("ingresar");
+	}
+	public ProjectEntryWindow (String action)
 	{
 		masterFrame = MasterFrame.getInstance();
 		generalInputs = new ArrayList<Component>();
 		roleInputs = new ArrayList<Component>();
 		requireMark = "<font color='red'>*</font>";
 		filledCounter = 0;
+		ACTION = action;
+		
+		init();
+	}
+
+	protected void init ()
+	{
 		ProjectEntryWindow entry = this;
 		
 		SwingWorker worker = new SwingWorker<Void, Void>()
@@ -55,6 +67,7 @@ public class ProjectEntryWindow extends JPanel
 				createPnlGenerals();
 				createPnlRoles();
 				createPnlBottom();
+				reform();
 
 				return null;
 			}
@@ -121,10 +134,10 @@ public class ProjectEntryWindow extends JPanel
 		pnlDirector.add(lblDirector);
 		pnlDirector.add(txtDirector);
 
-		pnlTitle.setToolTipText("Escriba el titulo del proyecto a ingresar");
-		pnlType.setToolTipText("Seleccione el tipo del proyecto a ingresar");
-		pnlProducer.setToolTipText("Escriba el productor del proyecto a ingresar");
-		pnlDirector.setToolTipText("Escriba el director del proyecto a ingresar");
+		pnlTitle.setToolTipText("Escriba el titulo del proyecto a " + ACTION + "");
+		pnlType.setToolTipText("Seleccione el tipo del proyecto a " + ACTION + "");
+		pnlProducer.setToolTipText("Escriba el productor del proyecto a " + ACTION + "");
+		pnlDirector.setToolTipText("Escriba el director del proyecto a " + ACTION + "");
 
 		pnlThirdColumn.add(pnlProducer);
 		pnlThirdColumn.add(pnlDirector);
@@ -142,6 +155,7 @@ public class ProjectEntryWindow extends JPanel
 	{
 		SpinnerNumberModel roleModel = new SpinnerNumberModel(0, 0, 100, 1);
 		JLabel lblRoles = new JLabel("Cantidad de roles");
+		JPanel pnlInnerRoles = new JPanel();
 		JSpinner spnRoles = new JSpinner(roleModel);
 		Border etched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
 		String title = "Roles";
@@ -151,10 +165,11 @@ public class ProjectEntryWindow extends JPanel
 
 		pnlOuterRoles = new JPanel();
 		pnlOuterRoles.setBorder(BorderFactory.createTitledBorder(etched, title));
+		pnlOuterRoles.setLayout(new BorderLayout());
 
+		spnRoles.setName("0");
 		spnRoles.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-		spnRoles.setToolTipText("Seleccione la cantidad de roles del proyecto a ingresar");
+		spnRoles.setToolTipText("Seleccione la cantidad de roles del proyecto a " + ACTION + "");
 
 		spnRoles.addChangeListener(new ChangeListener()
 		{
@@ -167,11 +182,13 @@ public class ProjectEntryWindow extends JPanel
 			}
 		});
 
-		pnlOuterRoles.add(spnRoles);
-		pnlOuterRoles.add(pnlRoles);
+		pnlInnerRoles.add(spnRoles);
+
+		pnlOuterRoles.add(pnlInnerRoles, BorderLayout.PAGE_START);
+		pnlOuterRoles.add(pnlRoles, BorderLayout.PAGE_END);
 	}
 
-	public void createPnlBottom ()
+	private void createPnlBottom ()
 	{
 		JLabel lblNote = new JLabel("<html>(" + requireMark + ") Campo obligatorio</html>");
 		
@@ -179,11 +196,11 @@ public class ProjectEntryWindow extends JPanel
 		pnlBottom.setLayout(new BoxLayout(pnlBottom, BoxLayout.Y_AXIS));
 
 		btnEnter = new JButton("Ingresar");
-		btnEnter.setAlignmentX(Component.CENTER_ALIGNMENT);
+		btnEnter.setAlignmentX(Component.LEFT_ALIGNMENT);
 		btnEnter.setEnabled(false);
-		btnEnter.setToolTipText("Llene los campos obligatorios para ingresar el proyecto");
+		btnEnter.setToolTipText("Llene los campos obligatorios para " + ACTION + " el proyecto");
 
-		lblNote.setAlignmentX(Component.LEFT_ALIGNMENT);
+		lblNote.setAlignmentX(Component.CENTER_ALIGNMENT);
 
 		btnEnter.addActionListener(new ActionListener()
 		{
@@ -198,7 +215,7 @@ public class ProjectEntryWindow extends JPanel
 	}
 
 	@SuppressWarnings("unchecked")
-	public void prepareRolesFields (int qtyRoles)
+	protected void prepareRolesFields (int qtyRoles)
 	{
 		int currentRoles = pnlRoles.getComponentCount();
 		JLabel lblName;
@@ -208,6 +225,7 @@ public class ProjectEntryWindow extends JPanel
 		JPanel pnlRol;
 		JPanel pnlName;
 		JPanel pnlCategory;
+		int qtyRequired;
 		String[] categories = {"Principal", "Secundario", "Reparto", "Figurante", "Extra"};
 
 		if (currentRoles < qtyRoles)
@@ -243,13 +261,28 @@ public class ProjectEntryWindow extends JPanel
 				roleInputs.add(cbbCategory);
 				roleInputs.add(txtName);
 			}
+
+			if (btnEnter.isEnabled())
+			{	
+				btnEnter.setEnabled(false);
+				btnEnter.setToolTipText("Llene los campos obligatorios para " + ACTION + " el proyecto");
+			}
+
 		}
 		else if (currentRoles > qtyRoles)
 		{
 			for (int i = 0; i < (currentRoles - qtyRoles); i++)
 			{
-				pnlRoles.remove((currentRoles - 1) - i);
-				roleInputs.remove((currentRoles - 1) - i);
+				pnlRoles.remove(pnlRoles.getComponentCount() - 1);
+				roleInputs.remove(roleInputs.size() - 1);
+				roleInputs.remove(roleInputs.size() - 1);
+			}
+
+			qtyRequired = (generalInputs.size() - 1) + (roleInputs.size() / 2);
+			if (filledCounter>=qtyRequired)
+			{	
+				btnEnter.setEnabled(true);
+    			btnEnter.setToolTipText("Ingresar el proyecto");
 			}
 		}
 
@@ -257,7 +290,7 @@ public class ProjectEntryWindow extends JPanel
 		this.repaint();
 	}
 
-	private void enter ()
+	protected void enter ()
 	{
 		ProjectEntryWindow entry = this;
 
@@ -303,7 +336,11 @@ public class ProjectEntryWindow extends JPanel
 				masterFrame.stopWaitingLayer();
 
 				if(wasEntered)
+				{
 					(new SuccessNotificationPopUp(masterFrame)).display("¡El proyecto ha sido ingresado!");
+					clearInputs(generalInputs);
+					clearInputs(roleInputs);
+				}
 				else
 					(new FailureNotificationPopUp(masterFrame)).display("El proyecto no ha sido ingresado");
 			}
@@ -312,6 +349,21 @@ public class ProjectEntryWindow extends JPanel
 
 		masterFrame.startWaitingLayer();
 	}
+
+	private void clearInputs (ArrayList<Component> inputs)
+	{
+		for (Component input : inputs)
+		{
+			if (input instanceof JTextField)
+				((JTextField) input).setText("");
+			else if (input instanceof JComboBox)
+				((JComboBox) input).setSelectedItem(0);
+			else if (input instanceof JSpinner)
+				((JSpinner) input).setValue(Integer.parseInt(((JSpinner) input).getName()));
+		}
+	}
+
+	protected void reform () {}
 
 	private class RequiredListener implements DocumentListener
 	{
@@ -336,13 +388,13 @@ public class ProjectEntryWindow extends JPanel
     	{
     		int qtyRequired = (generalInputs.size() - 1) + (roleInputs.size() / 2);
 
-    		filledCounter += (!input.getText().equals("") && !wasFilled) ? 1 : (filledCounter==0 || !input.getText().equals("")) ? 0 : -1;
+    		filledCounter += (!input.getText().equals("") && !wasFilled) ? 1 : (input.getText().equals("") && wasFilled) ? -1 : 0;
     		wasFilled = (!input.getText().equals(""));
 
     		if (filledCounter < qtyRequired)
     		{
     			btnEnter.setEnabled(false);
-    			btnEnter.setToolTipText("Llene los campos obligatorios para ingresar el proyecto");
+    			btnEnter.setToolTipText("Llene los campos obligatorios para " + ACTION + " el proyecto");
     		}
     		else
     		{

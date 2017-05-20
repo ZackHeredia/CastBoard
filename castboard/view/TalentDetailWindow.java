@@ -8,16 +8,20 @@ import javax.swing.SwingWorker;
 import javax.swing.BoxLayout;
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.ImageIcon;
 import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.Border;
+import javax.swing.DefaultComboBoxModel;
 import java.awt.GridLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.Component;
@@ -28,47 +32,81 @@ import java.awt.image.BufferedImage;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.io.IOException;
-import java.net.URL;
-import java.net.MalformedURLException;
-import javax.media.CannotRealizeException;
-import javax.media.Manager;
-import javax.media.NoPlayerException;
-import javax.media.Player;
-import javax.media.control.FrameGrabbingControl;
-import javax.media.format.VideoFormat;
-import javax.media.util.BufferToImage;
-import javax.media.Buffer;
+import javafx.embed.swing.JFXPanel;
+import javafx.application.Platform;
+import javafx.application.Application;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.event.EventHandler;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaPlayer.Status;
+import javafx.scene.media.MediaView;
+import javafx.util.Duration;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.scene.media.MediaView;
 
-public class TalentDetailWindow extends JPanel
+public class TalentDetailWindow extends Window
 {
-	private MasterFrame masterFrame;
 	private JPanel pnlTop;
 	private JPanel pnlBottom;
 	private ArrayList<ArrayList<String>> values;
 	private JPanel pnlLargerMedia;
 	private JPanel pnlMedia;
+	private MediaPanel pnlLargeVideo;
 	private ArrayList<String> largesMedia;
 	private ArrayList<JLabel> media;
 	private int currentLargeMedia;
 	private String id;
+	private String projectId;
+	private String roleName;
+	private boolean isPreselection;
+
 
 	public TalentDetailWindow (String id)
 	{
+		this(id, "", "");
+
+		isPreselection = false;
+	}
+	public TalentDetailWindow (String id, String projectId, String roleName)
+	{
 		this.id = id;
+		this.projectId = projectId;
+		this.roleName = roleName;
+		isPreselection = true;
 		masterFrame = MasterFrame.getInstance();
+
+		init();
+	}
+
+	protected void init ()
+	{
 		TalentDetailWindow detail = this;
 		
 		SwingWorker worker = new SwingWorker<Void, Void>()
 		{
 			protected Void doInBackground ()
-			{
+			{	
 				values = CatalogsHandler.get(id, CatalogsHandler.TALENT_SET);
 
 				try
 				{
 					createPnlTop();
 				}
-				catch (MalformedURLException e)
+				catch (Exception e)
 				{
 					e.printStackTrace();
 				}
@@ -92,7 +130,7 @@ public class TalentDetailWindow extends JPanel
 		masterFrame.startWaitingLayer();
 	}
 
-	private void createPnlTop () throws MalformedURLException
+	private void createPnlTop ()
 	{
 		CardLayout lytCard = new CardLayout();
 		JPanel pnlActions = new JPanel();
@@ -100,7 +138,6 @@ public class TalentDetailWindow extends JPanel
 		JLabel lblLargeFacePhoto = new JLabel (masterFrame.scale(new ImageIcon(values.get(0).get(0)), 344, 344));
 		JLabel lblLargeMidPhoto = new JLabel(masterFrame.scale(new ImageIcon(values.get(0).get(1)), 344, 344));
 		JLabel lblLargeFullPhoto = new JLabel(masterFrame.scale(new ImageIcon(values.get(0).get(2)), 344, 344));
-		MediaPanel pnlLargeVideo = new MediaPanel(new URL("file://" + values.get(0).get(3)));
 		JLabel lblFacePhoto = new JLabel (masterFrame.scale(new ImageIcon(values.get(0).get(0)), 160, 160));
 		JLabel lblMidPhoto = new JLabel(masterFrame.scale(new ImageIcon(values.get(0).get(1)), 160,160));
 		JLabel lblFullPhoto = new JLabel(masterFrame.scale(new ImageIcon(values.get(0).get(2)), 160,160));
@@ -109,6 +146,8 @@ public class TalentDetailWindow extends JPanel
 		JButton btnDelete = new JButton("Elimnar");
 		JButton btnPreselect = new JButton("Preseleccionar");
 		JButton btnSwitch = new JButton("Cambiar estatus");
+
+		pnlLargeVideo = new MediaPanel("file://" + values.get(0).get(3));
 
 		largesMedia = new ArrayList<String>();
 		media = new ArrayList<JLabel>();
@@ -173,7 +212,7 @@ public class TalentDetailWindow extends JPanel
 		{
 			public void actionPerformed (ActionEvent e)
 			{
-				//masterFrame.displayTalentUpdate(values);
+				masterFrame.displayTalentUpdate(id, values);
 			}
 		});
 		btnDelete.addActionListener(new ActionListener()
@@ -187,7 +226,7 @@ public class TalentDetailWindow extends JPanel
 		{
 			public void actionPerformed (ActionEvent e)
 			{
-				//preselect();
+				preselect();
 			}
 		});
 		btnSwitch.addActionListener(new ActionListener()
@@ -306,7 +345,7 @@ public class TalentDetailWindow extends JPanel
 
 		pnlBottom.add(pnlInnerLeftBottom);
 		pnlBottom.add(pnlInnerRightBottom);	
-}
+	}
 
 	private void prepareField (JPanel pnlField, String title, String[] fields, ArrayList<String> values)
 	{
@@ -357,7 +396,10 @@ public class TalentDetailWindow extends JPanel
 		if ((new ConfirmationPopUp(masterFrame)).display("El talento será eliminado"))
 		{
 			if (CatalogsHandler.remove(id))
+			{
 				(new SuccessNotificationPopUp(masterFrame)).display("El talento se ha eliminado");
+				masterFrame.previousWindow(this);
+			}
 			else
 				(new FailureNotificationPopUp(masterFrame)).display("El talento no se ha eliminado");
 		}
@@ -374,84 +416,430 @@ public class TalentDetailWindow extends JPanel
 		}
 	}
 
-	// Fig 21.6: MediaPanel.java
-	// A JPanel the plays media from a URL
-	// [Note: This tutorial is an excerpt (Section 21.6) of Chapter 21, Multimedia, from our 
-	// textbook Java How to Program, 6/e. This tutorial may refer to other chapters or sections of 
-	// the book that are not included here. Permission Information: Deitel, Harvey M. and Paul J., 
-	// JAVA HOW TO PROGRAM, ©2005, pp.992-996. Electronically reproduced by permission of Pearson 
-	// Education, Inc., Upper Saddle River, New Jersey.]
-	
-	private class MediaPanel extends JPanel
+	@SuppressWarnings("unchecked")
+	private void preselect ()
 	{
-	   private Player mediaPlayer;
-	   private Component controls;
-	   private Component video;
+		ArrayList<ArrayList<String>> projects;
+		ArrayList<ArrayList<String>> project;
+		String[] titles;
+		String[] ids;
+		String[] names;
+		String[] preselect;
+		JLabel lblProject;
+		JLabel lblRole;
+		JComboBox cbbProject;
+		JComboBox cbbRole;
+		JPanel pnlProject;
+		JPanel pnlRole;
+		JPanel pnlPreselection;
+		boolean wasPreselected = false;
 
-	   public MediaPanel(URL mediaURL)
-	   {
-
-	      setLayout( new BorderLayout() ); // use a BorderLayout
-	      
-	      // Use lightweight components for Swing compatibility
-	      Manager.setHint( Manager.LIGHTWEIGHT_RENDERER, true );
-	      
-	      try
-	      {
-	         // create a player to play the media specified in the URL
-	         mediaPlayer = Manager.createRealizedPlayer( mediaURL );
-	         
-	         // get the components for the video and the playback controls
-	         video = mediaPlayer.getVisualComponent();
-	         controls = mediaPlayer.getControlPanelComponent();
-
-	   		 add( video, BorderLayout.CENTER );
-	   		 add( controls, BorderLayout.SOUTH );
-
-	         scalePanel(344, 344);
-
-	      } // end try
-	      catch ( NoPlayerException noPlayerException )
-	      {
-	         System.err.println( "No media player found" );
-	      } // end catch
-	      catch ( CannotRealizeException cannotRealizeException )
-	      {
-	         System.err.println( "Could not realize media player" );
-	      } // end catch
-	      catch ( IOException iOException )
-	      {
-	         System.err.println( "Error reading from the source" );
-	      } // end catch
-	   } // end MediaPanel constructor
-
-	   public void start ()
-	   {
-	         mediaPlayer.start(); // start playing the media clip
-	   }
-	   public void stop ()
-	   {
-	   		mediaPlayer.stop();
-	   }
-
-		private void scalePanel (int width, int height)
+		if (!isPreselection)
 		{
-			int scaledWidth = this.getWidth();
-	        int scaledHeight = this.getHeight();
+			projects = CatalogsHandler.getSet(CatalogsHandler.PROJECT_SET);
+			ids = new String[projects.size()];
+			titles = new String[projects.size()];
 
-	        if(this.getWidth() > width)
-	        {
-	          scaledWidth = width;
-	          scaledHeight = (scaledWidth * this.getHeight()) / this.getWidth();
-	        }
+			for (int i = 0; i < projects.size(); i++)
+			{
+				if (projects.get(i).get(4).equals("Audicion"))
+				{
+					ids[i] = projects.get(i).get(0);
+					titles[i] = projects.get(i).get(1);
+				}
+			}
 
-	        if(scaledHeight > height)
-	        {
-	          scaledHeight = height;
-	          scaledWidth = (this.getWidth() * scaledHeight) / this.getHeight();
-	        }
+			if (titles[0]!=null)
+			{
+				lblProject = new JLabel("Proyecto");
+				lblRole = new JLabel("Rol");
 
-	        this.setMaximumSize(new Dimension(scaledWidth, scaledHeight));
-	    } 
-	} // end class MediaPanel
+				cbbProject = new JComboBox(titles);
+
+				project = CatalogsHandler.get(ids[cbbProject.getSelectedIndex()], CatalogsHandler.PROJECT_SET);
+				names = new String[project.size() - 1];
+
+				for (int i = 1; i < project.size(); i++)
+				{
+					if (project.get(i).size() == 1 && project.get(i).get(0).contains("["))
+					{
+						names[i-1] = project.get(i).get(0).substring(0, project.get(i).get(0).indexOf("["));
+					}
+				}
+
+				cbbRole = new JComboBox(names);
+
+				cbbProject.setToolTipText("Seleccionar el proyecto");
+				cbbRole.setToolTipText("Seleccionar el rol");
+				
+				cbbProject.addItemListener(new ItemListener()
+				{
+					public void itemStateChanged (ItemEvent e)
+					{
+						if (e.getStateChange() == ItemEvent.SELECTED)
+						{
+							ArrayList<ArrayList<String>> project = CatalogsHandler.get(ids[cbbProject.getSelectedIndex()], CatalogsHandler.PROJECT_SET);
+							String[] names = new String[project.size() - 1];
+
+							for (int i = 1; i < project.size(); i++)
+							{
+								if (project.get(i).size() == 1 && project.get(i).get(0).contains("["))
+								{
+									names[i-1] = project.get(i).get(0).substring(0, project.get(i).get(0).indexOf("["));
+								}
+							}
+
+							cbbRole.setModel(new DefaultComboBoxModel(names));
+						}
+					}
+				});
+
+				pnlProject = new JPanel();
+				pnlRole = new JPanel();
+				pnlPreselection = new JPanel();
+
+				pnlPreselection.setLayout(new BoxLayout(pnlPreselection, BoxLayout.Y_AXIS));
+
+				pnlProject.add(lblProject);
+				pnlProject.add(cbbProject);
+
+				pnlRole.add(lblRole);
+				pnlRole.add(cbbRole);
+
+				pnlPreselection.add(pnlProject);
+				pnlPreselection.add(pnlRole);
+
+				preselect = (new PetitionPopUp(masterFrame)).display(pnlPreselection);
+
+				if (preselect[0]!=null && preselect[1]!=null)
+				{
+					projectId = ids[cbbProject.getSelectedIndex()];
+					roleName = preselect[1];
+				}
+			}
+			else
+				(new CautionPopUp(masterFrame)).display("No hay proyectos en audición");
+		}
+
+		if (!(projectId.equals("") || roleName.equals("")))
+		{
+			wasPreselected = CatalogsHandler.preselect(id, projectId, roleName);
+
+			if (wasPreselected)
+				(new SuccessNotificationPopUp(masterFrame)).display("¡El talento ha sido preseleccionado!");
+			else
+				(new FailureNotificationPopUp(masterFrame)).display("El talento no ha sido preseleccionado");
+		}
+
+		projectId = "";
+		roleName = "";
+
+		if (isPreselection)
+			masterFrame.goBackWindows(this, 2);
+	}
+
+	public void close ()
+	{
+		pnlLargeVideo.stop();
+	}
+
+/*
+ * Copyright (c) 2012 Oracle and/or its affiliates.
+ * All rights reserved. Use is subject to license terms.
+ *
+ * This file is available and licensed under the following license:
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *  - Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  - Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the distribution.
+ *  - Neither the name of Oracle nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+	private class MediaPanel extends JFXPanel
+	{
+		private MediaControl mediaControl;
+
+		public MediaPanel (final String MEDIA_URL)
+		{
+			Platform.setImplicitExit(false);
+			MediaPanel panel = this;
+
+			Platform.runLater(new Runnable() 
+			{
+		        public void run() 
+		        {
+					Group root = new Group();
+			        Scene scene = new Scene(root, 344, 344);
+
+			        // create media player
+			        Media media = new Media(MEDIA_URL);
+			        MediaPlayer mediaPlayer = new MediaPlayer(media);
+			        mediaPlayer.setAutoPlay(false);
+			        mediaControl = new MediaControl(mediaPlayer);
+			        scene.setRoot(mediaControl);
+
+			        panel.setScene(scene);
+			    }
+			});
+		}
+
+	  	public void start ()
+	   	{
+	        mediaControl.play();
+	  	}
+	   	public void stop ()
+	   	{
+	   		mediaControl.pause();
+	   	}
+
+	    private class MediaControl extends BorderPane 
+		{
+		    private MediaPlayer mediaPlayer;
+		    private MediaView mediaView;
+		    private final boolean repeat = true;
+		    private boolean stopRequested = false;
+		    private boolean atEndOfMedia = false;
+		    private Duration duration;
+		    private Slider timeSlider;
+		    private Label playTime;
+		    private Slider volumeSlider;
+		    private HBox mediaBar;
+
+		    public MediaControl(final MediaPlayer mp) 
+		    {
+		        this.mediaPlayer = mp;
+
+		        setStyle("-fx-background-color: #bfc2c7;");
+		        mediaView = new MediaView();
+		        mediaView.setMediaPlayer(mediaPlayer);
+		        scale(344, 344);
+		        StackPane mvPane = new StackPane();
+		        mvPane.getChildren().add(mediaView);
+		        mvPane.setStyle("-fx-background-color: black;");
+		        StackPane.setAlignment(mediaView, Pos.CENTER);
+		        setCenter(mvPane);
+
+		        mediaBar = new HBox();
+		        mediaBar.setAlignment(Pos.CENTER);
+		        mediaBar.setPadding(new Insets(5, 10, 5, 10));
+		        BorderPane.setAlignment(mediaBar, Pos.CENTER);
+
+		        final Button playButton = new Button("\u25B8");
+
+		        playButton.setOnAction(new EventHandler<javafx.event.ActionEvent>() {
+		            public void handle(javafx.event.ActionEvent e) {
+		                Status status = mediaPlayer.getStatus();
+
+		                if (status == Status.UNKNOWN || status == Status.HALTED) {
+		                    // don't do anything in these states
+		                    return;
+		                }
+
+		                if (status == Status.PAUSED
+		                        || status == Status.READY
+		                        || status == Status.STOPPED) {
+		                    // rewind the movie if we're sitting at the end
+		                    if (atEndOfMedia) {
+		                        mediaPlayer.seek(mediaPlayer.getStartTime());
+		                        atEndOfMedia = false;
+		                    }
+		                    mediaPlayer.play();
+		                } else {
+		                    mediaPlayer.pause();
+		                }
+		            }
+		        });
+		        mediaPlayer.currentTimeProperty().addListener(new InvalidationListener() {
+		            public void invalidated(Observable ov) {
+		                updateValues();
+		            }
+		        });
+
+		        mediaPlayer.setOnPlaying(new Runnable() {
+		            public void run() {
+		                if (stopRequested) {
+		                    mediaPlayer.pause();
+		                    stopRequested = false;
+		                } else {
+		                    playButton.setText("||");
+		                }
+		            }
+		        });
+
+		        mediaPlayer.setOnPaused(new Runnable() {
+		            public void run() {
+		                System.out.println("onPaused");
+		                playButton.setText("\u25B8");
+		            }
+		        });
+
+		        mediaPlayer.setOnReady(new Runnable() {
+		            public void run() {
+		                duration = mediaPlayer.getMedia().getDuration();
+		                updateValues();
+		            }
+		        });
+
+		        mediaPlayer.setCycleCount(repeat ? MediaPlayer.INDEFINITE : 1);
+		        mediaPlayer.setOnEndOfMedia(new Runnable() {
+		            public void run() {
+		                if (!repeat) {
+		                    playButton.setText("\u25B8");
+		                    stopRequested = true;
+		                    atEndOfMedia = true;
+		                }
+		            }
+		        });
+
+		        mediaBar.getChildren().add(playButton);
+		        // Add spacer
+		        Label spacer = new Label("   ");
+		        mediaBar.getChildren().add(spacer);
+
+		        // Add Time label
+		        Label timeLabel = new Label("Time: ");
+		        mediaBar.getChildren().add(timeLabel);
+
+		        // Add time slider
+		        timeSlider = new Slider();
+		        HBox.setHgrow(timeSlider, Priority.ALWAYS);
+		        timeSlider.setMinWidth(50);
+		        timeSlider.setMaxWidth(Double.MAX_VALUE);
+		        timeSlider.valueProperty().addListener(new InvalidationListener() {
+		            public void invalidated(Observable ov) {
+		                if (timeSlider.isValueChanging()) {
+		                    // multiply duration by percentage calculated by slider position
+		                    mediaPlayer.seek(duration.multiply(timeSlider.getValue() / 100.0));
+		                }
+		            }
+		        });
+		        mediaBar.getChildren().add(timeSlider);
+
+		        // Add Play label
+		        playTime = new Label();
+		        playTime.setPrefWidth(130);
+		        playTime.setMinWidth(50);
+		        mediaBar.getChildren().add(playTime);
+
+		        // Add the volume label
+		        Label volumeLabel = new Label("Vol: ");
+		        mediaBar.getChildren().add(volumeLabel);
+
+		        // Add Volume slider
+		        volumeSlider = new Slider();
+		        volumeSlider.setPrefWidth(70);
+		        volumeSlider.setMaxWidth(Region.USE_PREF_SIZE);
+		        volumeSlider.setMinWidth(30);
+		        volumeSlider.valueProperty().addListener(new InvalidationListener() {
+		            public void invalidated(Observable ov) {
+		                if (volumeSlider.isValueChanging()) {
+		                    mediaPlayer.setVolume(volumeSlider.getValue() / 100.0);
+		                }
+		            }
+		        });
+		        mediaBar.getChildren().add(volumeSlider);
+
+		        setBottom(mediaBar);
+		    }
+
+		    @Deprecated
+		    protected void updateValues() {
+		        if (playTime != null && timeSlider != null && volumeSlider != null) {
+		            Platform.runLater(new Runnable() {
+		                public void run() {
+		                    Duration currentTime = mediaPlayer.getCurrentTime();
+		                    playTime.setText(formatTime(currentTime, duration));
+		                    timeSlider.setDisable(duration.isUnknown());
+		                    if (!timeSlider.isDisabled()
+		                            && duration.greaterThan(Duration.ZERO)
+		                            && !timeSlider.isValueChanging()) {
+		                        timeSlider.setValue(currentTime.divide(duration).toMillis()
+		                                * 100.0);
+		                    }
+		                    if (!volumeSlider.isValueChanging()) {
+		                        volumeSlider.setValue((int) Math.round(mediaPlayer.getVolume()
+		                                * 100));
+		                    }
+		                }
+		            });
+		        }
+		    }
+		    
+		    private String formatTime(Duration elapsed, Duration duration) {
+		        int intElapsed = (int) Math.floor(elapsed.toSeconds());
+		        int elapsedHours = intElapsed / (60 * 60);
+		        if (elapsedHours > 0) {
+		            intElapsed -= elapsedHours * 60 * 60;
+		        }
+		        int elapsedMinutes = intElapsed / 60;
+		        int elapsedSeconds = intElapsed - elapsedHours * 60 * 60
+		                - elapsedMinutes * 60;
+
+		        if (duration.greaterThan(Duration.ZERO)) {
+		            int intDuration = (int) Math.floor(duration.toSeconds());
+		            int durationHours = intDuration / (60 * 60);
+		            if (durationHours > 0) {
+		                intDuration -= durationHours * 60 * 60;
+		            }
+		            int durationMinutes = intDuration / 60;
+		            int durationSeconds = intDuration - durationHours * 60 * 60
+		                    - durationMinutes * 60;
+		            if (durationHours > 0) {
+		                return String.format("%d:%02d:%02d/%d:%02d:%02d",
+		                        elapsedHours, elapsedMinutes, elapsedSeconds,
+		                        durationHours, durationMinutes, durationSeconds);
+		            } else {
+		                return String.format("%02d:%02d/%02d:%02d",
+		                        elapsedMinutes, elapsedSeconds, durationMinutes,
+		                        durationSeconds);
+		            }
+		        } else {
+		            if (elapsedHours > 0) {
+		                return String.format("%d:%02d:%02d", elapsedHours,
+		                        elapsedMinutes, elapsedSeconds);
+		            } else {
+		                return String.format("%02d:%02d", elapsedMinutes,
+		                        elapsedSeconds);
+		            }
+		        }
+		    }
+
+		    public void play ()
+		   	{
+		        mediaPlayer.play();
+		  	}
+		   	public void pause ()
+		   	{
+		   		mediaPlayer.pause();
+		   	}
+
+		 	private void scale (double width, double height)
+			{
+		        if(mediaView.getFitWidth() >= mediaView.getFitHeight())  
+		        	mediaView.setFitWidth(width);
+		        else
+		        	mediaView.setFitHeight(height);
+		    }
+		}
+	}
 }

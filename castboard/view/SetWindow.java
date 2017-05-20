@@ -16,9 +16,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-public abstract class SetWindow extends JPanel
+public abstract class SetWindow extends Window
 {
-	protected MasterFrame masterFrame;
 	protected JPanel pnlGrid;
 	protected JPanel pnlNavigation;
 	protected ArrayList<JButton> thumbnails;
@@ -114,6 +113,7 @@ public abstract class SetWindow extends JPanel
 		{
 			indexAcum += counter;
 
+			pnlGrid.setPreferredSize(pnlGrid.getPreferredSize());
 			pnlGrid.revalidate();
 			this.repaint();
 		}
@@ -145,6 +145,8 @@ public abstract class SetWindow extends JPanel
 			(new FailureNotificationPopUp(masterFrame)).display("Ha llegado al final del catálogo");
 	}
 
+
+	protected void init () {}
 	public void createSet () {}
 	public boolean initThumbnails (ArrayList<String> args) {return false;}
 }

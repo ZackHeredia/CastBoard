@@ -79,8 +79,6 @@ public class LoginPopUp extends PopUp
 		
 		pnlForm.add(pnlAgent, BorderLayout.NORTH);
 		pnlForm.add(pnlPass, BorderLayout.SOUTH);
-		
-		txtAgent.requestFocus();
 	}
 
 	private void login (String user, String pass)

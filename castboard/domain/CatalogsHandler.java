@@ -20,6 +20,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public abstract class CatalogsHandler
 {
@@ -29,8 +34,8 @@ public abstract class CatalogsHandler
 	public static final int CINEMA_SET = 3;
 	public static final int SEQUENCE_SET = 4;
 
-	private static final TreeMap<String, String> PHOTOS_PATHS = new TreeMap<String, String>();
-	private static final TreeMap<String, String> VIDEOS_PATHS = new TreeMap<String, String>();
+	public static final TreeMap<String, String> PHOTOS_PATHS = new TreeMap<String, String>();
+	public static final TreeMap<String, String> VIDEOS_PATHS = new TreeMap<String, String>();
 
 	public static boolean connect (String user, String pass)
 	{
@@ -144,6 +149,28 @@ public abstract class CatalogsHandler
 		}
 
 		return wasEntered;
+	}
+	public static boolean update (ArrayList<ArrayList<String>> values, int setType)
+	{
+		boolean wasUpdated = false;
+
+		switch (setType)
+		{
+			case TALENT_SET:
+				wasUpdated = updateTalent(values);
+
+				break;
+			case PROJECT_SET:
+				wasUpdated = updateProject(values);
+
+				break;
+			default:
+				wasUpdated = false;
+
+				break;
+		}
+
+		return wasUpdated;
 	}
 
 	public static void notifyException (Exception e)
@@ -345,26 +372,35 @@ public abstract class CatalogsHandler
 		Talent talent = new Talent();
 		String[] photos = new String[3];
 		String[] videos = new String[1];
+		ExecutorService executor = Executors.newCachedThreadPool();
+		Future<String[]> photoFuture = null;
+		Future<String[]> videoFuture = null;
 
 		talent.setId(Long.parseLong(id));
 		getInterfaceDAL().retrive(talent);
 
-		photos = parse(talent.getPhotos(), talent.getId());
-		videos = parse(talent.getVideos(), Long.toString(talent.getId()));
-
-		inner = new ArrayList<String>();
-
-		inner.add(photos[2]);
-		inner.add(photos[1]);
-		inner.add(photos[0]);
-		inner.add(videos[0]);
-
-		values.add(inner);
+		if (talent.getVideos() != null)
+		{
+			photoFuture = executor.submit(new Callable<String[]>()
+			{
+				public String[] call () throws Exception
+				{
+					return parse(talent.getPhotos(), talent.getId());
+				}
+			});
+			videoFuture = executor.submit(new Callable<String[]>()
+			{
+				public String[] call () throws Exception
+				{
+					return parse(talent.getVideos(), Long.toString(talent.getId()));
+				}
+			});
+		}
 
 		inner = new ArrayList<String>();
 
 		inner.add(talent.getName() + " " + talent.getSurname());
-		inner.add(parse(talent.getBirthdate()));
+		inner.add(talent.getBirthdate().toString());
 		inner.add(talent.getSex().toString());
 
 		values.add(inner);
@@ -414,6 +450,43 @@ public abstract class CatalogsHandler
 
 		values.add(inner);
 
+
+		inner = new ArrayList<String>();
+
+		if (talent.getVideos() != null)
+		{
+			try
+			{
+				while(!photoFuture.isDone() || !videoFuture.isDone())
+				{
+					Thread.sleep(1000);
+				}
+
+				photos = photoFuture.get().clone();
+				videos = videoFuture.get().clone();
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+
+			inner.add(photos[2]);
+			inner.add(photos[1]);
+			inner.add(photos[0]);
+			inner.add(videos[0]);
+		}
+		else
+		{
+			inner.add(PHOTOS_PATHS.get("Rostro" + talent.getId()));
+			inner.add(PHOTOS_PATHS.get("Medio Cuerpo" + talent.getId()));
+			inner.add(PHOTOS_PATHS.get("Cuerpo Completo" + talent.getId()));
+			inner.add(VIDEOS_PATHS.get("Demo" + talent.getId()));
+		}
+
+		values.add(0, inner);
+
+		executor.shutdown();
+
 		return values;
 	}
 	private static ArrayList<ArrayList<String>> getProject (String id)
@@ -446,7 +519,7 @@ public abstract class CatalogsHandler
 
 				values.add(inner);
 
-				if (project.getSelecteds().isEmpty() && !project.getPreselecteds().isEmpty())
+				if (!project.getSelecteds().containsKey(name) && project.getPreselecteds().containsKey(name))
 				{
 					for (Talent talen : project.getPreselecteds().get(name))
 					{
@@ -461,7 +534,7 @@ public abstract class CatalogsHandler
 						values.add(inner);
 					}
 				}
-				else if (!project.getSelecteds().isEmpty())
+				else if (project.getSelecteds().containsKey(name))
 				{
 					talent = project.getSelecteds().get(name);
 
@@ -677,10 +750,199 @@ public abstract class CatalogsHandler
 
 		return getInterfaceDAL().enter(cinema);
 	}
+	
+	@Deprecated
+	private static boolean updateTalent (ArrayList<ArrayList<String>> values)
+	{
+		Talent talent = new Talent();
+
+		talent.setId(Long.parseLong(values.get(0).get(0)));
+
+		talent.setBirthdate(new Date());
+
+		talent.setName(values.get(1).get(0));
+		talent.setSurname(values.get(1).get(1));
+		talent.getBirthdate().setDate(Integer.parseInt(values.get(1).get(2)));
+		talent.getBirthdate().setMonth(Integer.parseInt(values.get(1).get(3)) - 1);
+		talent.getBirthdate().setYear(Integer.parseInt(values.get(1).get(4)) - 1900);
+		talent.setSex(Sex.identifierOf(values.get(1).get(5)));
+
+		talent.setSocialNetworks(new TreeMap<String, String>());
+		talent.setAddress(new TreeMap<String, String>());
+
+		talent.setMobilePhone(values.get(2).get(0));
+		talent.setHomePhone(values.get(2).get(1));
+		talent.getSocialNetworks().put("Facebook", values.get(2).get(2));
+		talent.getSocialNetworks().put("Instagram", values.get(2).get(3));
+		talent.getSocialNetworks().put("Twitter", values.get(2).get(4));
+		talent.getAddress().put("Numero", values.get(2).get(5));
+		talent.getAddress().put("Calle", values.get(2).get(6));
+		talent.getAddress().put("Sector", values.get(2).get(7));
+		talent.getAddress().put("Provincia", values.get(2).get(8));
+		talent.setEmail(values.get(2).get(9));
+
+		talent.setPhysique(Physique.identifierOf(values.get(3).get(0)));
+		talent.setSkinTone(SkinTone.identifierOf(values.get(3).get(1)));
+		talent.setStature(parse(values.get(3).get(2), values.get(3).get(3)));
+		talent.setHairTexture(HairTexture.identifierOf(values.get(3).get(4)));
+		talent.setEyeColor(values.get(3).get(5));
+		talent.setProfileType(ProfileType.identifierOf(values.get(3).get(6)));
+		talent.setHairColor(values.get(3).get(7));
+
+		talent.setShirtSize(ShirtSize.identifierOf(values.get(4).get(0)));
+		talent.setPantSize(values.get(4).get(1));
+		talent.setShoeSize(Float.parseFloat((values.get(4).get(2).isEmpty()) ? "0" : values.get(4).get(2)));
+
+		talent.setAcademicLevel(values.get(5).get(0));
+		talent.setHobbies(values.get(5).get(1));
+		talent.setArtisticExperience(values.get(5).get(2));
+		talent.setScheduleAvailable(values.get(5).get(3));
+
+		talent.setArtisticSkills(values.get(6));
+		talent.setDominatedLanguages(values.get(7));
+
+		talent.setPhotos(new TreeMap<String, BufferedImage>());
+		talent.setVideos(new TreeMap<String, InputStream>());
+
+		addPhotoEntry(talent.getPhotos(), "Rostro", parse(Paths.get(values.get(8).get(0))));
+		addPhotoEntry(talent.getPhotos(), "Medio Cuerpo", parse(Paths.get(values.get(8).get(1))));
+		addPhotoEntry(talent.getPhotos(), "Cuerpo Completo", parse(Paths.get(values.get(8).get(2))));
+		talent.getVideos().put("Demo",  parse(Paths.get(values.get(8).get(3))));
+
+		return getInterfaceDAL().update(talent);
+	}
+	private static boolean updateProject (ArrayList<ArrayList<String>> values)
+	{
+		Project project = new Project();
+
+		project.setId(Long.parseLong(values.get(0).get(0)));
+
+		project.setTitle(values.get(1).get(0));
+		project.setType(Type.identifierOf(values.get(1).get(1)));
+		project.setProducer(values.get(1).get(2));
+		project.setDirector(values.get(1).get(3));
+
+		project.setRoles(new TreeMap<Category, ArrayList<String>>());
+		for (ArrayList<String> roles : new ArrayList<ArrayList<String>>(values.subList(2, values.size())))
+		{
+			if(!project.getRoles().containsKey(Category.identifierOf(roles.get(0))))
+				project.getRoles().put(Category.identifierOf(roles.get(0)), new ArrayList<String>());
+
+			project.getRoles().get(Category.identifierOf(roles.get(0))).add(roles.get(1));
+		}
+
+		return getInterfaceDAL().update(project);
+	}
+
+	public static boolean preselect (String talentId, String projectId, String roleName)
+	{
+		return getInterfaceDAL().preselect(Long.parseLong(talentId), Long.parseLong(projectId), roleName);
+	}
+
+	public static boolean present (String projectId, String dir)
+	{
+		Project project = new Project();
+		Path photoPath;
+		Path videoPath;
+		Path dirProject;
+		Path dirRole;
+		Path dirTalent;
+
+		project.setId(Long.parseLong(projectId));
+		project = getInterfaceDAL().retrive(project);
+
+		try
+		{
+			dirProject = Paths.get(dir, project.getTitle());
+
+			if (Files.notExists(dirProject))
+				dirProject = Files.createDirectory(dirProject);
+
+			for (Entry<String, ArrayList<Talent>> preselected : project.getPreselecteds().entrySet())
+			{
+				dirRole = Paths.get(dirProject.toString(), preselected.getKey());
+
+				if (Files.notExists(dirRole))
+					dirRole = Files.createDirectory(dirRole);
+
+				for (Talent talent : preselected.getValue())
+				{
+					talent = getInterfaceDAL().retrive(talent);
+
+					dirTalent = Paths.get(dirRole.toString(), (talent.getName() + " " + talent.getSurname() + 
+													" - " + parse(talent.getBirthdate())));
+
+					if (Files.notExists(dirTalent))
+						dirTalent = Files.createDirectory(dirTalent);
+
+					for (Entry<String, BufferedImage> photo : talent.getPhotos().entrySet()) 
+					{
+						photoPath = Paths.get(dirTalent.toString(), (photo.getKey() + ".jpg"));
+						photoPath = Files.createFile(photoPath);
+
+						ImageIO.write(photo.getValue(), "jpg", photoPath.toFile());
+					}
+					
+					for (Entry<String, InputStream> video : talent.getVideos().entrySet()) 
+					{
+						videoPath = Paths.get(dirTalent.toString(), (video.getKey() + ".mp4"));
+						videoPath = Files.createFile(videoPath);
+
+						Files.copy(video.getValue(), videoPath, StandardCopyOption.REPLACE_EXISTING);
+					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+
+			return false;
+		}
+
+		return true;
+	}
+
+	public static String[][] getSuppressed ()
+	{
+		Item suppressed = null;
+		ArrayList<Item> items = getInterfaceDAL().retriveSet(suppressed);
+		String[][] suppresseds = new String[items.size()][4];
+
+		for(int i = 0; i < suppresseds.length; i++)
+		{
+			suppressed = items.get(i);
+
+			suppresseds[i][0] = "" + suppressed.getId();
+			suppresseds[i][1] = suppressed.getCreationDate().toString();
+
+			if (suppressed instanceof Talent)
+			{
+				suppresseds[i][2] = ((Talent) suppressed).getName();
+				suppresseds[i][3] = "Talento";
+			}
+			else
+			{
+				suppresseds[i][2] = ((Project) suppressed).getTitle();
+				suppresseds[i][3] = "Proyecto";
+			}
+		}
+
+		return suppresseds;
+	}
+
+	public static boolean select (String talentId, String projectId, String roleName)
+	{
+		return getInterfaceDAL().select(Long.parseLong(talentId), Long.parseLong(projectId), roleName);
+	}
 
 	public static boolean remove (String id)
 	{
 		return getInterfaceDAL().suppress(Long.parseLong(id));
+	}
+	public static boolean restore (String id)
+	{
+		return getInterfaceDAL().unsuppress(Long.parseLong(id));
 	}
 
 	public static boolean switchStatus (String id, String currentStatus)
@@ -721,7 +983,7 @@ public abstract class CatalogsHandler
 			return "";
 
 		int feet = (int) stature;
-		float inches = (stature - feet) * 12;
+		int inches = Math.round((stature - feet) * 12);
 
 		return (feet + "' " + inches + "''");
 	}
@@ -768,8 +1030,11 @@ public abstract class CatalogsHandler
 		{
 			for (Entry<String, BufferedImage> photo : photos.entrySet())
 			{
-				if (PHOTOS_PATHS.containsKey(photo.getKey() + id))
+				if (PHOTOS_PATHS.containsKey(photo.getKey() + id) && 
+					!Files.notExists(Paths.get(PHOTOS_PATHS.get(photo.getKey() + id))))
+				{
 					photosPath[i] = PHOTOS_PATHS.get(photo.getKey() + id);
+				}
 				else
 				{
 					photoFile = File.createTempFile(photo.getKey() + id, ".jpg");
@@ -778,9 +1043,9 @@ public abstract class CatalogsHandler
 					ImageIO.write(photo.getValue(), "jpg", photoFile);
 
 					photosPath[i] = photoFile.getAbsolutePath();
-					PHOTOS_PATHS.put(photo.getKey() + id, photoFile.getAbsolutePath());
-					i++;
+					PHOTOS_PATHS.put(photo.getKey() + id, photosPath[i]);
 				}
+				++i;
 			}
 		}
 		catch (Exception e)
@@ -817,8 +1082,11 @@ public abstract class CatalogsHandler
 		{
 			for (Entry<String, InputStream> video : videos.entrySet())
 			{
-				if (VIDEOS_PATHS.containsKey(video.getKey() + id))
+				if (VIDEOS_PATHS.containsKey(video.getKey() + id) && 
+					!Files.notExists(Paths.get(VIDEOS_PATHS.get(video.getKey() + id))))
+				{
 					videosPath[i] = VIDEOS_PATHS.get(video.getKey() + id);
+				}
 				else
 				{
 					videoPath = Files.createTempFile(video.getKey() + id, ".mp4");
@@ -827,9 +1095,9 @@ public abstract class CatalogsHandler
 					Files.copy(video.getValue(), videoPath, StandardCopyOption.REPLACE_EXISTING);
 
 					videosPath[i] = videoPath.toAbsolutePath().toString();
-					VIDEOS_PATHS.put(video.getKey() + id, videoPath.toAbsolutePath().toString());
-					i++;
+					VIDEOS_PATHS.put(video.getKey() + id, videosPath[i]);
 				}
+				++i;
 			}
 		}
 		catch (Exception e)
@@ -870,7 +1138,7 @@ public abstract class CatalogsHandler
 
 		for(int i = 1; i < list.size(); i++)
 		{
-			strList.concat(", " + list.get(i));
+			strList = strList.concat(", " + list.get(i));
 		}
 
 		return strList;

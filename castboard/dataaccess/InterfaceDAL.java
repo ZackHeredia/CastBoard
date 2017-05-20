@@ -18,6 +18,11 @@ import java.util.Map.Entry;
 import java.util.AbstractMap.SimpleEntry;
 import java.io.InputStream;
 import java.awt.image.BufferedImage;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class InterfaceDAL
 {
@@ -430,15 +435,126 @@ public class InterfaceDAL
 
 		return projects;
 	}
+	public ArrayList<Item> retriveSet (Item suppressed)
+	{
+		ArrayList<Item> items = new ArrayList<Item>();
+		Statement statement = null;
+		PreparedStatement pStatement = null;
+		ResultSet result = null;
+		String queryItem = null;
+		Talent talent;
+		Project project;
+
+		if (suppressed == null)
+		{
+			queryItem = "SELECT i.id, i.creationDate, (t.name || ' ' || t.surname), p.title " +
+								  "FROM Items AS i LEFT JOIN Talents AS t ON i.id=t.id LEFT JOIN " +
+								  	   "Projects AS p ON i.id=p.id " +
+								  "WHERE i.isSuppressed=true " +
+								  "ORDER BY i.creationDate DESC";
+
+			try
+			{
+				statement = connection.createStatement();
+				result = statement.executeQuery(queryItem);
+
+				while(result.next())
+				{
+					if (result.getString(3)!=null)
+					{
+						talent = new Talent();
+
+						talent.setId(result.getLong(1));
+						talent.setCreationDate(result.getTimestamp(2).toLocalDateTime());
+						talent.setName(result.getString(3));
+
+						items.add(talent);
+					}
+					else
+					{
+						project = new Project();
+
+						project.setId(result.getLong(1));
+						project.setCreationDate(result.getTimestamp(2).toLocalDateTime());
+						project.setTitle(result.getString(4));
+
+						items.add(project);
+					}
+				}
+
+				statement.close();
+				result.close();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
+		else
+		{
+			queryItem = "SELECT i.id, i.creationDate, (t.name || ' ' || t.surname), p.title " +
+								  "FROM Items AS i LEFT JOIN Talents AS t ON i.id=t.id LEFT JOIN " +
+								  	   "Projects AS p ON i.id=p.id " +
+								  "WHERE i.id=?, i.isSuppressed=true " +
+								  "ORDER BY i.creationDate DESC";
+
+			try
+			{
+				pStatement = connection.prepareStatement(queryItem);
+
+				pStatement.setLong(1, suppressed.getId());
+
+				result = pStatement.executeQuery();
+
+				result.next();
+
+				if (result.getString(3)!=null)
+				{
+					talent = new Talent();
+
+					talent.setId(result.getLong(1));
+					talent.setCreationDate(result.getTimestamp(2).toLocalDateTime());
+					talent.setName(result.getString(3));
+
+					items.add(talent);
+				}
+				else
+				{
+					project = new Project();
+
+					project.setId(result.getLong(1));
+					project.setCreationDate(result.getTimestamp(2).toLocalDateTime());
+					project.setTitle(result.getString(4));
+
+					items.add(project);
+				}
+
+				pStatement.close();
+				result.close();
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}	
+
+		return items;
+	}
 
 	public Talent retrive (Talent thumbnail)
 	{
+		ExecutorService executor = Executors.newCachedThreadPool();
+		Future<InputStream> futureVideo = null;
 		PreparedStatement statement;
 		ResultSet result;
+		byte[] bytesVideo;
+		String videoName = null;
 
+		String queryVideo = "SELECT * " +
+							 "FROM TalentsVideos AS tv " +
+							 "WHERE tv.talentId=?";
 		String queryTalent = "SELECT * " +
 							 "FROM Talents AS t LEFT JOIN TalentsAddresses AS ta ON t.id=ta.talentId " +
-								  "LEFT JOIN TalentsVideos AS tv ON t.id=tv.talentId " +
 							 "WHERE t.id=?";
 		String queryNetwork = "SELECT * " +
 							  "FROM TalentsSocialNetworks AS tsn " +
@@ -458,6 +574,26 @@ public class InterfaceDAL
 
 		try
 		{
+			if (!CatalogsHandler.VIDEOS_PATHS.containsKey("Demo" + thumbnail.getId()))
+			{			
+				statement = connection.prepareStatement(queryVideo);
+				statement.setLong(1, thumbnail.getId());
+
+				result = statement.executeQuery();
+				result.next();
+
+				bytesVideo = result.getBytes("video");
+
+				futureVideo = executor.submit(new Callable<InputStream>()
+				{
+					public InputStream call () throws Exception
+					{
+						return CatalogsHandler.parse(bytesVideo);
+					}
+				});
+				videoName = result.getString("name");
+			}
+
 			statement = connection.prepareStatement(queryTalent);
 			statement.setLong(1, thumbnail.getId());
 
@@ -492,8 +628,6 @@ public class InterfaceDAL
 			thumbnail.setArtisticExperience(result.getString("artisticExperience"));//result.getClob("artisticExperience").getSubString(1, 
 																//(int) result.getClob("artisticExperience").length()));
 			thumbnail.setStatus(Status.identifierOf(result.getString("status")));
-			thumbnail.setVideos(new TreeMap<String, InputStream>());
-			thumbnail.getVideos().put(result.getString(30), CatalogsHandler.parse(result.getBytes("video")));
 
 			statement = connection.prepareStatement(queryNetwork);
 			statement.setLong(1, thumbnail.getId());
@@ -513,7 +647,7 @@ public class InterfaceDAL
 
 			while (result.next())
 			{
-				if (result.getString("type") == "M")
+				if (result.getString("type").equals("M"))
 					thumbnail.setMobilePhone(result.getString("num"));
 				else
 					thumbnail.setHomePhone(result.getString("num"));
@@ -541,22 +675,36 @@ public class InterfaceDAL
 				thumbnail.getDominatedLanguages().add(result.getString("language"));
 			}
 
-			statement = connection.prepareStatement(queryPhotos);
-			statement.setLong(1, thumbnail.getId());
-
-			result = statement.executeQuery();
-			
-			thumbnail.setPhotos(new TreeMap<String, java.awt.image.BufferedImage>());
-			while (result.next())
+			if (!CatalogsHandler.PHOTOS_PATHS.containsKey("Cuerpo Completo" + thumbnail.getId()))
 			{
-				CatalogsHandler.addPhotoEntry(thumbnail.getPhotos(), result.getString("name"), 
-											  result.getBlob("photo").getBinaryStream());
+				statement = connection.prepareStatement(queryPhotos);
+				statement.setLong(1, thumbnail.getId());
+
+				result = statement.executeQuery();
+				
+				thumbnail.setPhotos(new TreeMap<String, java.awt.image.BufferedImage>());
+				while (result.next())
+				{
+					CatalogsHandler.addPhotoEntry(thumbnail.getPhotos(), result.getString("name"), 
+												  result.getBlob("photo").getBinaryStream());
+				}
+			}
+
+			if (!CatalogsHandler.VIDEOS_PATHS.containsKey("Demo" + thumbnail.getId()))
+			{
+				thumbnail.setVideos(new TreeMap<String, InputStream>());
+				while (!futureVideo.isDone())
+				{
+					Thread.sleep(1000);
+				}
+
+				thumbnail.getVideos().put(videoName, futureVideo.get());
 			}
 
 			statement.close();
 			result.close();
 		}
-		catch (SQLException e)
+		catch (Exception e)
 		{
 			e.printStackTrace();
 		}
@@ -637,7 +785,18 @@ public class InterfaceDAL
 					thumbnail.getPreselecteds().get(result.getString(1)).add(talent);
 				}
 				else
+				{
 					thumbnail.getPreselecteds().put(result.getString(1), new ArrayList<Talent>());
+
+					talent = new Talent();
+					talent.setId(result.getLong(2));
+					talent.setPhotos(CatalogsHandler.parse("Rostro", result.getBlob(3).getBinaryStream()));
+					talent.setName(result.getString(4));
+					talent.setBirthdate(new java.util.Date(result.getDate(5).getTime()));
+					talent.setProfileType(ProfileType.identifierOf(result.getString(6)));
+
+					thumbnail.getPreselecteds().get(result.getString(1)).add(talent);
+				}
 			}
 
 			statement = connection.prepareStatement(queryTalentSelected);
@@ -869,8 +1028,6 @@ public class InterfaceDAL
 
 			pStatement.executeUpdate();
 
-			//pStatement = connection.prepareStatement(insertPhones);
-
 			pStatement.setString(1, talent.getHomePhone());
 			pStatement.setString(2, "F");
 
@@ -1045,7 +1202,7 @@ public class InterfaceDAL
 							   "VALUES ((" + queryId + "), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		String queryRole = "SELECT id FROM ProjectsRoles WHERE projectId=? AND name=?";
 		String insertSelecteds = "INSERT INTO SequencesTalents(sequenceId, roleId, talentId) " +
-							   "VALUES ((" + queryId + "), (" + queryRole +"), ?)";
+							   "VALUES ((" + queryId + "), (" + queryRole + "), ?)";
 		String query = "SELECT MAX(id) FROM Sequences WHERE num=? AND projectId=?";
 
 		try
@@ -1115,6 +1272,451 @@ public class InterfaceDAL
 		return wasEntered;
 	}
 
+	public boolean update (Talent talent)
+	{
+		Statement statement;
+		PreparedStatement pStatement;
+		CallableStatement cStatement = null;
+		ResultSet resultNetworks;
+		ResultSet resultSkills;
+		ResultSet resultLanguages;
+		int minimunAffecteds = 7;
+		int affectedRows = 0;
+		boolean isInserted = false;
+
+		String queryNetwork = "SELECT network " +
+							  "FROM TalentsSocialNetworks AS tsn " +
+							  "WHERE tsn.talentId=?";
+		String querySkills = "SELECT skill " +
+							 "FROM TalentsArtisticSkills AS tas " +
+							 "WHERE tas.talentId=?";
+		String queryLanguages = "SELECT language " +
+								"FROM TalentsDominatedLanguages AS tdl " +
+								"WHERE tdl.talentId=?";
+		String insertNetworks = "INSERT INTO TalentsSocialNetworks(talentId, network, account) " +
+							    "VALUES (?, ?, ?)";
+		String insertSkills = "INSERT INTO TalentsArtisticSkills(talentId, skill) " +
+							  "VALUES (?, ?)";
+		String insertLanguages = "INSERT INTO TalentsDominatedLanguages(talentId, language) " +
+							    "VALUES (?, ?)";
+		String updateTalent = "UPDATE Talents SET name=?, surname=?, birthdate=?, sex=?, email=?, " + 
+												 "physique=?, stature=?, skinTone=?, hairTexture=?, " +
+												 "hairColor=?, eyeColor=?, profileType=?, shirtSize=?, " +
+												 "pantsSize=?, shoeSize=?, academicLevel=?, hobbies=?, " +
+												 "scheduleAvailable=?, artisticExperience=? " +
+							   "WHERE id=?";
+		String updateAddress = "UPDATE TalentsAddresses SET num=?, street=?, neighborhood=?, " +
+														   "city=? " +
+							   "WHERE talentId=?";
+		String updateNetworks = "UPDATE TalentsSocialNetworks SET account=? " +
+							    "WHERE network=? AND talentId=?";
+		String updatePhones = "UPDATE TalentsPhones SET num=? " +
+							  "WHERE type=? AND talentId=?";
+		String updateSkills = "UPDATE TalentsArtisticSkills SET skill=? " +
+							  "WHERE skill=? AND talentId=?";
+		String updateLanguages = "UPDATE TalentsDominatedLanguages SET language=? " +
+							     "WHERE talentId=?";
+		String updatePhotos = "UPDATE TalentsPhotos SET photo=? " +
+							  "WHERE name=? AND talentId=?";
+		String updateVideos = "UPDATE TalentsVideos SET video=? " +
+							  "WHERE name=? AND talentId=?";
+
+		try
+		{
+			pStatement = connection.prepareStatement(queryNetwork, ResultSet.TYPE_SCROLL_INSENSITIVE, 
+																   ResultSet.CONCUR_READ_ONLY);
+			pStatement.setLong(1, talent.getId());
+
+			resultNetworks = pStatement.executeQuery();
+
+			pStatement = connection.prepareStatement(querySkills, ResultSet.TYPE_SCROLL_INSENSITIVE, 
+																  ResultSet.CONCUR_READ_ONLY);
+			pStatement.setLong(1, talent.getId());
+
+			resultSkills = pStatement.executeQuery();
+
+			pStatement = connection.prepareStatement(queryLanguages, ResultSet.TYPE_SCROLL_INSENSITIVE, 
+																	 ResultSet.CONCUR_READ_ONLY);
+			pStatement.setLong(1, talent.getId());
+
+			resultLanguages = pStatement.executeQuery();
+
+			pStatement = connection.prepareStatement(updateTalent);
+
+			pStatement.setString(1, talent.getName());
+			pStatement.setString(2, talent.getSurname());
+			pStatement.setDate(3, (new Date(talent.getBirthdate().getTime())));
+			pStatement.setString(4, talent.getSex().toString());
+			pStatement.setString(5, talent.getEmail());
+			pStatement.setString(6, talent.getPhysique().toString());
+			pStatement.setFloat(7, talent.getStature());
+			pStatement.setString(8, talent.getSkinTone().toString());
+			pStatement.setString(9, talent.getHairTexture().toString());
+			pStatement.setString(10, talent.getHairColor());
+			pStatement.setString(11, talent.getEyeColor());
+			pStatement.setString(12, talent.getProfileType().toString());
+			pStatement.setString(13, talent.getShirtSize().toString());
+			pStatement.setString(14, talent.getPantSize());
+			pStatement.setFloat(15, talent.getShoeSize());
+			pStatement.setString(16, talent.getAcademicLevel());
+			pStatement.setString(17, talent.getHobbies());
+			pStatement.setString(18, talent.getScheduleAvailable());
+			pStatement.setString(19, talent.getArtisticExperience());
+			pStatement.setLong(20, talent.getId());
+
+			connection.setAutoCommit(false);
+
+			pStatement.executeUpdate();
+			++affectedRows;
+
+			pStatement = connection.prepareStatement(updateAddress);
+
+			pStatement.setString(1, talent.getAddress().get("Numero"));
+			pStatement.setString(2, talent.getAddress().get("Calle"));
+			pStatement.setString(3, talent.getAddress().get("Sector"));
+			pStatement.setString(4, talent.getAddress().get("Provincia"));
+			pStatement.setLong(5, talent.getId());
+
+			pStatement.executeUpdate();
+			++affectedRows;
+		
+			for (Entry<String, String> network : talent.getSocialNetworks().entrySet())
+			{
+				while (resultNetworks.next())
+				{
+					isInserted = (resultNetworks.getString(1).equals(network.getKey()));
+
+					if (isInserted)
+						break;
+				}
+
+				if (isInserted)
+				{
+					pStatement = connection.prepareStatement(updateNetworks);
+
+					pStatement.setString(1, network.getValue());
+					pStatement.setString(2, network.getKey());
+					pStatement.setLong(3, talent.getId());
+
+					pStatement.executeUpdate();
+					++affectedRows;
+				}
+				else
+				{
+					pStatement = connection.prepareStatement(insertNetworks);
+
+					pStatement.setLong(1, talent.getId());
+					pStatement.setString(2, network.getKey());
+					pStatement.setString(3, network.getValue());
+
+					pStatement.executeUpdate();
+					++affectedRows;
+				}
+
+				resultNetworks.beforeFirst();
+			}
+			
+			pStatement = connection.prepareStatement(updatePhones);
+
+			pStatement.setString(1, talent.getMobilePhone());
+			pStatement.setString(2, "M");
+			pStatement.setLong(3, talent.getId());
+
+			pStatement.executeUpdate();
+			++affectedRows;
+
+			pStatement.setString(1, talent.getHomePhone());
+			pStatement.setString(2, "F");
+			pStatement.setLong(3, talent.getId());
+
+			pStatement.executeUpdate();
+			++affectedRows;
+
+			while (resultSkills.next())
+			{
+				for (String skill : talent.getArtisticSkills())
+				{
+					isInserted = (skill.equals(resultSkills.getString(1)));
+
+					if (isInserted)
+						break;
+				}
+
+				if (isInserted == false)
+				{
+					cStatement = connection.prepareCall("{CALL dba.drop_record_sp(?, ?, ?, ?, ?)}");
+					
+					cStatement.setLong(1, talent.getId());
+					cStatement.setString(2, "TalentsArtisticSkills");
+					cStatement.setString(3, "skill");
+					cStatement.setString(4, resultSkills.getString(1));
+					cStatement.setString(5, "talentId");
+
+					cStatement.execute();
+					++affectedRows;
+
+					cStatement.close();
+				}
+			}
+
+			resultSkills.beforeFirst();
+
+			for (String skill : talent.getArtisticSkills())
+			{
+				while (resultSkills.next())
+				{
+					isInserted = (resultSkills.getString(1).equals(skill));
+
+					if (isInserted)
+						break;
+				}
+
+				if (isInserted == false)
+				{
+					pStatement = connection.prepareStatement(insertSkills);
+					
+					pStatement.setLong(1, talent.getId());
+					pStatement.setString(2, skill);
+
+					pStatement.executeUpdate();
+					++affectedRows;
+				}
+
+				resultSkills.beforeFirst();
+			}
+
+			while (resultLanguages.next())
+			{
+				for (String language : talent.getDominatedLanguages())
+				{
+					isInserted = (language.equals(resultLanguages.getString(1)));
+
+					if (isInserted)
+						break;
+				}
+
+				if (isInserted == false)
+				{
+					cStatement = connection.prepareCall("{CALL dba.drop_record_sp(?, ?, ?, ?, ?)}");
+					
+					cStatement.setLong(1, talent.getId());
+					cStatement.setString(2, "TalentsDominatedLanguages");
+					cStatement.setString(3, "language");
+					cStatement.setString(4, resultLanguages.getString(1));
+					cStatement.setString(5, "talentId");
+
+					cStatement.execute();
+					++affectedRows;
+
+					cStatement.close();
+				}
+			}
+
+			resultLanguages.beforeFirst();
+
+			for (String language : talent.getDominatedLanguages())
+			{
+				while (resultLanguages.next())
+				{
+					isInserted = (resultLanguages.getString(1).equals(language));
+
+					if (isInserted)
+						break;
+				}
+
+				if (isInserted == false)
+				{
+					pStatement = connection.prepareStatement(insertLanguages);		
+
+					pStatement.setLong(1, talent.getId());
+					pStatement.setString(2, language);
+
+					pStatement.executeUpdate();
+					++affectedRows;
+				}
+
+				resultLanguages.beforeFirst();
+			}
+
+			pStatement = connection.prepareStatement(updatePhotos);
+
+			for (Entry<String, BufferedImage> photo : talent.getPhotos().entrySet())
+			{
+				pStatement.setBlob(1, CatalogsHandler.parse(photo.getValue()));
+				pStatement.setString(2, photo.getKey());
+				pStatement.setLong(3, talent.getId());
+
+				pStatement.executeUpdate();
+				++affectedRows;
+			}
+
+			pStatement = connection.prepareStatement(updateVideos);
+
+			for (Entry<String, InputStream> video : talent.getVideos().entrySet())
+			{
+				pStatement.setBlob(1, video.getValue());
+				pStatement.setString(2, video.getKey());
+				pStatement.setLong(3, talent.getId());
+
+				pStatement.executeUpdate();
+				++affectedRows;
+			}
+
+			connection.commit();
+			connection.setAutoCommit(true);
+
+			pStatement.close();
+			resultNetworks.close();
+			resultSkills.close();
+			resultLanguages.close();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+
+			try
+			{
+				connection.rollback();
+				connection.setAutoCommit(true);
+			}
+			catch (SQLException ex) 
+			{
+				ex.printStackTrace();
+
+				return false;
+			}
+
+			return false;
+		}
+
+		return (minimunAffecteds <= affectedRows);
+	}
+	public boolean update (Project project)
+	{
+		PreparedStatement pStatement;
+		CallableStatement cStatement = null;
+		ResultSet result;
+		boolean isInserted = false;
+		int affectedRows = 0;
+
+		String queryRoles = "SELECT name " +
+							"FROM ProjectsRoles AS pr " +
+							"WHERE pr.projectId=? " +
+							"ORDER BY pr.category";
+		String insertRoles = "INSERT INTO ProjectsRoles(projectId, category, name) " +
+							 "VALUES (?, ?, ?)";
+		String updateProject = "UPDATE Projects SET title=?, type=?, producer=?, director=? " +
+							   "WHERE id=?";
+
+		try
+		{
+			pStatement = connection.prepareStatement(queryRoles, ResultSet.TYPE_SCROLL_INSENSITIVE, 
+													 ResultSet.CONCUR_READ_ONLY);
+			pStatement.setLong(1, project.getId());
+
+			result = pStatement.executeQuery();
+
+			pStatement = connection.prepareStatement(updateProject);
+
+			pStatement.setString(1, project.getTitle());
+			pStatement.setString(2, project.getType().toString());
+			pStatement.setString(3, project.getProducer());
+			pStatement.setString(4, project.getDirector());
+			pStatement.setLong(5, project.getId());
+
+			connection.setAutoCommit(false);
+
+			pStatement.executeUpdate();
+			++affectedRows;
+
+			while (result.next())
+			{
+				for (Entry<Category, ArrayList<String>> role : project.getRoles().entrySet())
+				{
+					for (String name : role.getValue())
+					{
+						isInserted = (name.equals(result.getString(1)));
+
+						if (isInserted)
+							break;
+					}
+
+					if (isInserted)
+						break;
+				}
+
+				if (isInserted == false)
+				{
+					cStatement = connection.prepareCall("{CALL dba.drop_record_sp(?, ?, ?, ?, ?)}");
+					
+					cStatement.setLong(1, project.getId());
+					cStatement.setString(2, "ProjectsRoles");
+					cStatement.setString(3, "name");
+					cStatement.setString(4, "'" + result.getString(1) + "'");
+					cStatement.setString(5, "projectId");
+
+					pStatement.execute();
+					++affectedRows;
+
+					cStatement.close();
+				}
+			}
+
+			for (Entry<Category, ArrayList<String>> role : project.getRoles().entrySet())
+			{
+				for (String name : role.getValue())
+				{
+					while (result.next())
+					{
+						isInserted = (result.getString(1).equals(name));
+
+						if (isInserted)
+							break;
+					}
+
+					if (isInserted == false)
+					{
+						pStatement = connection.prepareStatement(insertRoles);
+				
+						pStatement.setLong(1, project.getId());
+						pStatement.setString(2, role.getKey().toString());
+						pStatement.setString(3, name);
+
+						pStatement.executeUpdate();
+						++affectedRows;
+					}
+
+					result.beforeFirst();
+				}
+			}
+
+			connection.commit();
+			connection.setAutoCommit(true);
+
+			pStatement.close();
+			result.close();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+
+			try
+			{
+				connection.rollback();
+				connection.setAutoCommit(true);
+			}
+			catch (SQLException ex) 
+			{
+				ex.printStackTrace();
+				return false;
+			}
+
+			return false;
+		}
+
+		return (affectedRows >= 1);
+	}
+
 	public boolean suppress (long id)
 	{
 		PreparedStatement statement;
@@ -1122,17 +1724,38 @@ public class InterfaceDAL
 		
 		String update = "UPDATE Items SET isSuppressed=true WHERE id=?";
 		
-	try
-	{
-		statement = connection.prepareStatement(update);
-		statement.setLong(1, id);
-			
-		affectedRows = statement.executeUpdate();
+		try
+		{
+			statement = connection.prepareStatement(update);
+			statement.setLong(1, id);
+				
+			affectedRows = statement.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return (affectedRows >= 1);
 	}
-	catch (SQLException e)
+	public boolean unsuppress (long id)
 	{
-		e.printStackTrace();
-	}
+		PreparedStatement statement;
+		int affectedRows = 0;
+		
+		String update = "UPDATE Items SET isSuppressed=false WHERE id=?";
+		
+		try
+		{
+			statement = connection.prepareStatement(update);
+			statement.setLong(1, id);
+				
+			affectedRows = statement.executeUpdate();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
 		
 		return (affectedRows >= 1);
 	}
@@ -1164,6 +1787,100 @@ public class InterfaceDAL
 	public boolean terminate (long id)
 	{
 		return changeState(id, "Termino");
+	}
+
+	public boolean preselect (long talentId, long projectId, String roleName)
+	{
+		PreparedStatement pStatement;
+		long roleId;
+		ResultSet result;
+		boolean isPreselected = false;
+		int affectedRows = 0;
+
+		String queryRole = "SELECT id " +
+							"FROM ProjectsRoles " +
+							"WHERE projectId=? AND name=?";
+		String insertProposal = "INSERT INTO ProposedTalents(roleId, talentId, isSelected) " +
+							 "VALUES (?, ?, DEFAULT)";
+
+		try
+		{
+			pStatement = connection.prepareStatement(queryRole);
+
+			pStatement.setLong(1, projectId);
+			pStatement.setString(2, roleName);
+
+			result = pStatement.executeQuery();
+
+			result.next();
+			roleId = result.getLong(1);
+
+			pStatement = connection.prepareStatement(insertProposal);
+
+			pStatement.setLong(1, roleId);
+			pStatement.setLong(2, talentId);
+
+			pStatement.executeUpdate();
+			affectedRows++;
+
+			pStatement.close();
+			result.close();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+
+			return false;
+		}
+
+		return (affectedRows>=1);
+	}
+	public boolean select (long talentId, long projectId, String roleName)
+	{
+		PreparedStatement pStatement;
+		long roleId;
+		ResultSet result;
+		int affectedRows = 0;
+
+		String queryRole = "SELECT id " +
+							"FROM ProjectsRoles " +
+							"WHERE projectId=? AND name=?";
+		String updateProposal = "UPDATE ProposedTalents SET isSelected=true " +
+								"WHERE roleId=? AND talentId=?";
+
+		try
+		{
+			pStatement = connection.prepareStatement(queryRole);
+
+			pStatement.setLong(1, projectId);
+			pStatement.setString(2, roleName);
+
+			result = pStatement.executeQuery();
+
+			result.next();
+			roleId = result.getLong(1);
+
+			pStatement = connection.prepareStatement(updateProposal);
+
+			pStatement.setLong(1, roleId);
+			pStatement.setLong(2, talentId);
+
+			pStatement.executeUpdate();
+			affectedRows++;
+
+			pStatement.close();
+			result.close();
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+
+			return false;
+		}
+
+		changeState(projectId, "Desarrollo");
+
+		return (affectedRows>=1);
 	}
 
 	private boolean changeState (long id, String state)

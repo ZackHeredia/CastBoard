@@ -27,9 +27,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 
-public class TalentSearchWindow extends JPanel
+public class TalentSearchWindow extends Window
 {
-	private MasterFrame masterFrame;
 	private JPanel pnlSearchForm;
 	private SetWindow pnlMatches;
 	private ButtonGroup btgSex;
@@ -51,10 +50,25 @@ public class TalentSearchWindow extends JPanel
 	private JSpinner spnInches;
 	private JComboBox cbbProfileType;
 	private JComboBox cbbCity;
+	private String projectId;
+	private String roleName;
+	private boolean isPreselection;
 
 	public TalentSearchWindow ()
 	{
+		this("", "");
+	}
+	public TalentSearchWindow (String projectId, String roleName)
+	{
+		this.projectId = projectId;
+		this.roleName = roleName;
 		masterFrame = MasterFrame.getInstance();
+		
+		init();
+	}
+
+	protected void init ()
+	{
 		TalentSearchWindow search = this;
 		
 		SwingWorker worker = new SwingWorker<Void, Void>()
@@ -316,7 +330,11 @@ public class TalentSearchWindow extends JPanel
 				if (talents.isEmpty())
 					return false;
 
-				thumbnails = masterFrame.makeTalentThumbnails(talents);
+				if (projectId.equals("") || roleName.equals(""))
+					thumbnails = masterFrame.makeTalentThumbnails(talents);
+				else
+					thumbnails = masterFrame.makeTalentThumbnails(talents, projectId, roleName);
+
 				indexAcum = 0;
 
 				return true;
@@ -351,8 +369,6 @@ public class TalentSearchWindow extends JPanel
 		args.add(chkMusic.isSelected() ? chkMusic.getText() : "");
 		args.add(chkSinging.isSelected() ? chkSinging.getText() : "");
 		args.add(chkOther.isSelected() ? txtOther.getText() : "");
-
-		System.out.println("searchbtn");
 
 		SwingWorker worker = new SwingWorker<Void, Void>()
 		{

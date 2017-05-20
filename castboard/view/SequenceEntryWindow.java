@@ -13,6 +13,7 @@ import javax.swing.JLabel;
 import javax.swing.SwingWorker;
 import javax.swing.BoxLayout;
 import javax.swing.Box;
+import javax.swing.plaf.basic.BasicSpinnerUI;
 import java.awt.Dimension;
 import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
@@ -29,9 +30,8 @@ import javax.swing.JScrollPane;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
-public class SequenceEntryWindow extends JPanel
+public class SequenceEntryWindow extends Window
 {
-	private MasterFrame masterFrame;
 	private JPanel pnlGenerals;
 	private JPanel pnlScript;
 	private JPanel pnlOuterRoles;
@@ -43,6 +43,8 @@ public class SequenceEntryWindow extends JPanel
 	private ArrayList<Component> roleInputs;
 	private String requireMark;
 	private int filledCounter;
+	private String projectdId;
+	private TreeMap<String, String> roles;
 
 	public SequenceEntryWindow (String projectdId, TreeMap<String, String> roles)
 	{
@@ -52,6 +54,14 @@ public class SequenceEntryWindow extends JPanel
 		roleInputs = new ArrayList<Component>();
 		requireMark = "<font color='red'>*</font>";
 		filledCounter = 0;
+		this.projectdId = projectdId;
+		this.roles = roles;
+		
+		init();
+	}
+
+	protected void init ()
+	{
 		SequenceEntryWindow entry = this;
 		
 		SwingWorker worker = new SwingWorker<Void, Void>()
@@ -125,6 +135,16 @@ public class SequenceEntryWindow extends JPanel
 		pnlDay.setAlignmentX(Component.RIGHT_ALIGNMENT);
 		pnlMonth.setAlignmentX(Component.RIGHT_ALIGNMENT);
 		pnlYear.setAlignmentX(Component.RIGHT_ALIGNMENT);
+
+		spnNumber.setName("" + 1);
+		spnDay.setName("" + 1);
+		spnMonth.setName("" + 1);
+		spnYear.setName("" + 2000);
+
+		hideArrow(spnNumber);
+		spnNumber.setEditor(new JSpinner.NumberEditor(spnNumber, "####"));
+
+		spnYear.setEditor(new JSpinner.NumberEditor(spnYear, "####"));
 
 		txtLocation.getDocument().putProperty("parent", txtLocation);
 		txtLocation.getDocument().addDocumentListener(new RequiredListener());
@@ -202,6 +222,9 @@ public class SequenceEntryWindow extends JPanel
 		
 		pnlThirdColumn.setLayout(new BoxLayout(pnlThirdColumn, BoxLayout.Y_AXIS));
 
+		spnPage.setName("" + 1);
+		spnDay.setName("" + 1);
+
 		pnlType.add(lblType);
 		pnlType.add(cbbType);
 
@@ -235,6 +258,7 @@ public class SequenceEntryWindow extends JPanel
 	{
 		SpinnerNumberModel roleModel = new SpinnerNumberModel(0, 0, 100, 1);
 		JLabel lblRoles = new JLabel("Cantidad de roles");
+		JPanel pnlInnerRoles = new JPanel();
 		JSpinner spnRoles = new JSpinner(roleModel);
 		Border etched = BorderFactory.createEtchedBorder(EtchedBorder.RAISED);
 		String title = "Roles";
@@ -244,9 +268,10 @@ public class SequenceEntryWindow extends JPanel
 
 		pnlOuterRoles = new JPanel();
 		pnlOuterRoles.setBorder(BorderFactory.createTitledBorder(etched, title));
+		pnlOuterRoles.setLayout(new BorderLayout());
 
-		//spnRoles.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+		spnRoles.setName("0");
+		spnRoles.setAlignmentX(Component.LEFT_ALIGNMENT);
 		spnRoles.setToolTipText("Seleccione la cantidad de roles de la secuencia a crear");
 
 		spnRoles.addChangeListener(new ChangeListener()
@@ -260,8 +285,10 @@ public class SequenceEntryWindow extends JPanel
 			}
 		});
 
-		pnlOuterRoles.add(spnRoles);
-		pnlOuterRoles.add(pnlRoles);
+		pnlInnerRoles.add(spnRoles);
+
+		pnlOuterRoles.add(pnlInnerRoles, BorderLayout.PAGE_START);
+		pnlOuterRoles.add(pnlRoles, BorderLayout.PAGE_END);
 	}
 
 	public void createPnlBottom (TreeMap<String, String> roles)
@@ -339,6 +366,7 @@ public class SequenceEntryWindow extends JPanel
 			{
 				ArrayList<String> inner = new ArrayList<String>();
 				ArrayList<ArrayList<String>> values = new ArrayList<ArrayList<String>>();
+				String key;
 				String role;
 
 				values.add(fillArray(generalInputs));
@@ -349,10 +377,11 @@ public class SequenceEntryWindow extends JPanel
 					if (input instanceof JComboBox)
 					{
 						inner = new ArrayList<String>();
-						role = ((String) (((JComboBox) input).getSelectedItem())).substring(0, ((String) (((JComboBox) input).getSelectedItem())).indexOf("["));
+						key = ((String) (((JComboBox) input).getSelectedItem()));
+						role = key.substring(0, ((String) (((JComboBox) input).getSelectedItem())).indexOf("["));
 					
 						inner.add(role);
-						inner.add((roles.get(role) == null) ? "0" : roles.get(role));
+						inner.add((roles.get(key) == null) ? "0" : roles.get(key));
 
 						values.add(inner);
 					}
@@ -368,7 +397,12 @@ public class SequenceEntryWindow extends JPanel
 				masterFrame.stopWaitingLayer();
 
 				if(wasEntered)
+				{
 					(new SuccessNotificationPopUp(masterFrame)).display("¡La secuencia ha sido creada!");
+					clearInputs(generalInputs);
+					clearInputs(scriptInputs);
+					clearInputs(roleInputs);
+				}
 				else
 					(new FailureNotificationPopUp(masterFrame)).display("La secuencia no ha sido creada");
 			}
@@ -396,6 +430,41 @@ public class SequenceEntryWindow extends JPanel
 
 		return inner;
 	}
+
+	private void clearInputs (ArrayList<Component> inputs)
+	{
+		for (Component input : inputs)
+		{
+			if (input instanceof JTextField)
+				((JTextField) input).setText("");
+			else if (input instanceof JComboBox)
+				((JComboBox) input).setSelectedItem(0);
+			else if (input instanceof JTextArea)
+				((JTextArea) input).setText("");
+			else if (input instanceof JSpinner)
+				((JSpinner) input).setValue(Integer.parseInt(((JSpinner) input).getName()));
+		}
+	}
+
+	private void hideArrow(JSpinner spinner) 
+	{
+        Dimension d = spinner.getPreferredSize();
+        d.width = 35;
+
+        spinner.setUI(new BasicSpinnerUI() 
+        {
+            protected Component createNextButton() 
+            {
+                return null;
+            }
+            protected Component createPreviousButton() 
+            {
+                return null;
+            }
+        });
+
+        spinner.setPreferredSize(d);
+    }
 
 	private class RequiredListener implements DocumentListener
 	{

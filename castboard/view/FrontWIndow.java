@@ -19,15 +19,20 @@ import java.awt.event.MouseAdapter;
 import java.awt.Color;
 import java.util.ArrayList;
 
-public class FrontWindow extends JPanel
+public class FrontWindow extends Window
 {
-	MasterFrame masterFrame;
 	JPanel pnlProject;
 	JPanel pnlTalent;
 
 	public FrontWindow ()
 	{
 		masterFrame = MasterFrame.getInstance();
+		
+		init();
+	}
+
+	protected void init ()
+	{
 		FrontWindow front = this;
 
 		SwingWorker worker = new SwingWorker<Void, Void>()

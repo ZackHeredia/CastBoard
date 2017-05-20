@@ -3,7 +3,7 @@ package castboard;
 import javax.swing.JFrame;
 import castboard.view.MasterFrame;
 
-public class Skeleton0
+public class Castboard
 {
 	public static void main(String[] args) 
 	{

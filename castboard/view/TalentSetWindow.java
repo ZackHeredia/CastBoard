@@ -10,6 +10,13 @@ public class TalentSetWindow extends SetWindow
 	public TalentSetWindow ()
 	{
 		super("Talentos");
+		
+		init();
+	}
+
+	protected void init ()
+	{
+		indexAcum = 0;
 		TalentSetWindow talentSet = this;
 
 		SwingWorker worker = new SwingWorker<Void, Void>()

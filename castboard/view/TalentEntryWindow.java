@@ -39,9 +39,8 @@ import java.util.ArrayList;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 
-public class TalentEntryWindow extends JPanel
+public class TalentEntryWindow extends Window
 {
-	private MasterFrame masterFrame;
 	private JPanel pnlGenerals;
 	private JPanel pnlContact;
 	private JPanel pnlProfile;
@@ -49,19 +48,25 @@ public class TalentEntryWindow extends JPanel
 	private JPanel pnlAptitudes;
 	private JPanel pnlMedia;
 	private JPanel pnlBottom;
-	private JButton btnEnter;
-	private ArrayList<Object> generalInputs;
-	private ArrayList<Object> contactInputs;
-	private ArrayList<Object> profileInputs;
-	private ArrayList<Object> measuresInputs;
-	private ArrayList<Object> aptitudesInputs;
-	private ArrayList<Object> skillInputs;
-	private ArrayList<Object> languageInputs;
-	private ArrayList<Object> mediaInputs;
+	protected JButton btnEnter;
+	protected ArrayList<Object> generalInputs;
+	protected ArrayList<Object> contactInputs;
+	protected ArrayList<Object> profileInputs;
+	protected ArrayList<Object> measuresInputs;
+	protected ArrayList<Object> aptitudesInputs;
+	protected ArrayList<Object> skillInputs;
+	protected ArrayList<Object> languageInputs;
+	protected ArrayList<Object> mediaInputs;
 	private String requireMark;
 	private int filledCounter;
 
+	protected final String ACTION;
+
 	public TalentEntryWindow ()
+	{
+		this("ingresar");
+	}
+	public TalentEntryWindow (String action)
 	{
 		masterFrame = MasterFrame.getInstance();
 		generalInputs = new ArrayList<Object>();
@@ -74,6 +79,13 @@ public class TalentEntryWindow extends JPanel
 		mediaInputs = new ArrayList<Object>();
 		requireMark = "<font color='red'>*</font>";
 		filledCounter = 0;
+		ACTION = action;
+		
+		init();
+	}
+
+	protected void init ()
+	{
 		TalentEntryWindow entry = this;
 		
 		SwingWorker worker = new SwingWorker<Void, Void>()
@@ -87,6 +99,7 @@ public class TalentEntryWindow extends JPanel
 				createPnlAptitudes();
 				createPnlMedia();
 				createPnlBottom();
+				reform();
 
 				return null;
 			}
@@ -209,10 +222,10 @@ public class TalentEntryWindow extends JPanel
 		pnlFirstColumn.add(pnlName);
 		pnlFirstColumn.add(pnlSex);
 
-		pnlName.setToolTipText("Escriba el nombre del talento a ingresar");
-		pnlSurname.setToolTipText("Escriba el apellido del talento a ingresar");
-		pnlBirtdate.setToolTipText("Seleccione la fecha de nacimiento del talento a ingresar");
-		pnlSex.setToolTipText("Seleccione el sexo del talento a ingresar");
+		pnlName.setToolTipText("Escriba el nombre del talento a " + ACTION + "");
+		pnlSurname.setToolTipText("Escriba el apellido del talento a " + ACTION + "");
+		pnlBirtdate.setToolTipText("Seleccione la fecha de nacimiento del talento a " + ACTION + "");
+		pnlSex.setToolTipText("Seleccione el sexo del talento a " + ACTION + "");
 
 		pnlGenerals.add(pnlFirstColumn);
 		pnlGenerals.add(pnlSurname);
@@ -298,6 +311,17 @@ public class TalentEntryWindow extends JPanel
 		spnMobile2.setEditor(new JSpinner.NumberEditor(spnMobile2, "0000"));
 		spnHome2.setEditor(new JSpinner.NumberEditor(spnHome2, "0000"));
 
+		((JSpinner.NumberEditor) spnMobile1.getEditor()).getTextField().setText("");
+		((JSpinner.NumberEditor) spnMobile2.getEditor()).getTextField().setText("");
+		((JSpinner.NumberEditor) spnHome1.getEditor()).getTextField().setText("");
+		((JSpinner.NumberEditor) spnHome2.getEditor()).getTextField().setText("");
+
+		spnMobile1.setName("000");
+		spnHome1.setName("000");
+
+		spnMobile2.setName("0000");
+		spnHome2.setName("0000");
+
 		hideArrow(spnMobile1);
 		hideArrow(spnMobile2);
 		hideArrow(spnHome1);
@@ -359,11 +383,11 @@ public class TalentEntryWindow extends JPanel
 		pnlThirdColumn.add(pnlNetwork);
 		pnlThirdColumn.add(pnlEmail);
 
-		pnlMobile.setToolTipText("Escriba el teléfono movil del talento a ingresar");
-		pnlHome.setToolTipText("Escriba el teléfono fijo del talento a ingresar");
-		pnlNetwork.setToolTipText("Escriba las redes del talento a ingresar");
-		pnlAddress.setToolTipText("Escriba la dirección del talento a ingresar");
-		pnlEmail.setToolTipText("Escriba el email del talento a ingresar");
+		pnlMobile.setToolTipText("Escriba el teléfono movil del talento a " + ACTION + "");
+		pnlHome.setToolTipText("Escriba el teléfono fijo del talento a " + ACTION + "");
+		pnlNetwork.setToolTipText("Escriba las redes del talento a " + ACTION + "");
+		pnlAddress.setToolTipText("Escriba la dirección del talento a " + ACTION + "");
+		pnlEmail.setToolTipText("Escriba el email del talento a " + ACTION + "");
 
 		pnlContact.add(pnlFirstColumn);
 		pnlContact.add(pnlHome);
@@ -463,13 +487,13 @@ public class TalentEntryWindow extends JPanel
 		pnlHairColor.add(lblHairColor);
 		pnlHairColor.add(txtHairColor);
 
-		pnlPhysique.setToolTipText("Seleccione la complexión del talento a ingresar");
-		pnlSkinTone.setToolTipText("Seleccione el tono de piel del talento a ingresar");
-		pnlStature.setToolTipText("Seleccione la estatura del talento a ingresar");
-		pnlHairTexture.setToolTipText("Seleccione la textura de pelo del talento a ingresar");
-		pnlEyeColor.setToolTipText("Escriba el color de ojos del talento a ingresar");
-		pnlProfileType.setToolTipText("Seleccione el tipo de perfil del talento a ingresar");
-		pnlHairColor.setToolTipText("Escriba el color de pelo del talento a ingresar");
+		pnlPhysique.setToolTipText("Seleccione la complexión del talento a " + ACTION + "");
+		pnlSkinTone.setToolTipText("Seleccione el tono de piel del talento a " + ACTION + "");
+		pnlStature.setToolTipText("Seleccione la estatura del talento a " + ACTION + "");
+		pnlHairTexture.setToolTipText("Seleccione la textura de pelo del talento a " + ACTION + "");
+		pnlEyeColor.setToolTipText("Escriba el color de ojos del talento a " + ACTION + "");
+		pnlProfileType.setToolTipText("Seleccione el tipo de perfil del talento a " + ACTION + "");
+		pnlHairColor.setToolTipText("Escriba el color de pelo del talento a " + ACTION + "");
 
 		pnlFirstColumn.add(pnlPhysique);
 		pnlFirstColumn.add(pnlHairTexture);
@@ -522,9 +546,9 @@ public class TalentEntryWindow extends JPanel
 		pnlShoes.add(lblShoes);
 		pnlShoes.add(txtShoes);
 
-		pnlShirt.setToolTipText("Seleccione la talla de camisa del talento a ingresar");
-		pnlPants.setToolTipText("Escriba la talla de pantalón del talento a ingresar");
-		pnlShoes.setToolTipText("Escriba la talla de zapatos del talento a ingresar");
+		pnlShirt.setToolTipText("Seleccione la talla de camisa del talento a " + ACTION + "");
+		pnlPants.setToolTipText("Escriba la talla de pantalón del talento a " + ACTION + "");
+		pnlShoes.setToolTipText("Escriba la talla de zapatos del talento a " + ACTION + "");
 		
 		pnlMeasures.add(pnlShirt);
 		pnlMeasures.add(pnlPants);
@@ -550,13 +574,13 @@ public class TalentEntryWindow extends JPanel
 		JScrollPane sclHobbies = new JScrollPane(txaHobbies);
 		JScrollPane sclExperience = new JScrollPane(txaExperience);
 		JScrollPane sclSchedule = new JScrollPane(txaSchedule);
-		JCheckBox chkActing = new JCheckBox("Actuacion");
+		JCheckBox chkActing = new JCheckBox("Actuación");
 		JCheckBox chkDancing = new JCheckBox("Baile");
-		JCheckBox chkMusic = new JCheckBox("Musica");
+		JCheckBox chkMusic = new JCheckBox("Música");
 		JCheckBox chkSinging = new JCheckBox("Canto");
 		JCheckBox chkSkill = new JCheckBox("Otra:");
 		JTextField txtSkill = new JTextField(16);
-		JCheckBox chkEnglish = new JCheckBox("Ingles");
+		JCheckBox chkEnglish = new JCheckBox("Inglés");
 		JCheckBox chkFrench = new JCheckBox("Francés");
 		JCheckBox chkLanguage = new JCheckBox("Otro:");
 		JTextField txtLanguage = new JTextField(16);
@@ -661,12 +685,12 @@ public class TalentEntryWindow extends JPanel
 		pnlSecondColumn.add(pnlSkills);
 		pnlSecondColumn.add(pnlLanguages);
 
-		pnlAcademic.setToolTipText("Escriba el nivel académico del talento a ingresar");
-		pnlHobbies.setToolTipText("Escriba los pasatiempos del talento a ingresar");
-		pnlExperience.setToolTipText("Escriba la experiencia artistica del talento a ingresar");
-		pnlSchedule.setToolTipText("Escriba el horario disponible del talento a ingresar");
-		pnlSkills.setToolTipText("Escriba las habilidades artísticas del talento a ingresar");
-		pnlLanguages.setToolTipText("Escriba los idiomas que domina del talento a ingresar");
+		pnlAcademic.setToolTipText("Escriba el nivel académico del talento a " + ACTION + "");
+		pnlHobbies.setToolTipText("Escriba los pasatiempos del talento a " + ACTION + "");
+		pnlExperience.setToolTipText("Escriba la experiencia artistica del talento a " + ACTION + "");
+		pnlSchedule.setToolTipText("Escriba el horario disponible del talento a " + ACTION + "");
+		pnlSkills.setToolTipText("Escriba las habilidades artísticas del talento a " + ACTION + "");
+		pnlLanguages.setToolTipText("Escriba los idiomas que domina del talento a " + ACTION + "");
 
 		pnlAptitudes.add(pnlFirstColumn);
 		pnlAptitudes.add(pnlSecondColumn);
@@ -689,9 +713,9 @@ public class TalentEntryWindow extends JPanel
 	private void createPnlMedia ()
 	{
 		JLabel lblFace = new JLabel("<html>" + requireMark + "Foto del rostro: </html>");
-		JLabel lblMid = new JLabel("Foto a medio cuerpo: ");
-		JLabel lblFull = new JLabel("Foto a cuerpo completo: ");
-		JLabel lblVideo = new JLabel("video: ");
+		JLabel lblMid = new JLabel("<html>" + requireMark + "Foto a medio cuerpo: </html>");
+		JLabel lblFull = new JLabel("<html>" + requireMark + "Foto a cuerpo completo: </html>");
+		JLabel lblVideo = new JLabel("<html>" + requireMark + "video: </html>");
 		JLabel lblRouteFace = new JLabel(" ...");
 		JLabel lblRouteMid = new JLabel(" ...");
 		JLabel lblRouteFull = new JLabel(" ...");
@@ -765,6 +789,9 @@ public class TalentEntryWindow extends JPanel
 			}
 		});
 		lblRouteFace.addPropertyChangeListener("text", (new RequiredListener()));
+		lblRouteMid.addPropertyChangeListener("text", (new RequiredListener()));
+		lblRouteFull.addPropertyChangeListener("text", (new RequiredListener()));
+		lblRouteVideo.addPropertyChangeListener("text", (new RequiredListener()));
 
 		pnlFace.add(lblFace);
 		pnlFace.add(btnFace);
@@ -805,11 +832,11 @@ public class TalentEntryWindow extends JPanel
 		pnlBottom.setLayout(new BoxLayout(pnlBottom, BoxLayout.Y_AXIS));
 
 		btnEnter = new JButton("Ingresar");
-		btnEnter.setAlignmentX(Component.CENTER_ALIGNMENT);
+		btnEnter.setAlignmentX(Component.LEFT_ALIGNMENT);
 		btnEnter.setEnabled(false);
-		btnEnter.setToolTipText("Llene los campos obligatorios para ingresar al talento");
+		btnEnter.setToolTipText("Llene los campos obligatorios para " + ACTION + " al talento");
 
-		lblNote.setAlignmentX(Component.LEFT_ALIGNMENT);
+		lblNote.setAlignmentX(Component.CENTER_ALIGNMENT);
 
 		btnEnter.addActionListener(new ActionListener()
 		{
@@ -833,7 +860,9 @@ public class TalentEntryWindow extends JPanel
 			return " ...";
 	}
 
-	private void enter ()
+	protected void reform () {}
+
+	protected void enter ()
 	{
 		TalentEntryWindow entry = this;
 
@@ -884,7 +913,7 @@ public class TalentEntryWindow extends JPanel
 		masterFrame.startWaitingLayer();
 	}
 
-	private ArrayList<String> fillArray (ArrayList<Object> inputs)
+	protected ArrayList<String> fillArray (ArrayList<Object> inputs)
 	{
 		ArrayList<String> inner = new ArrayList<String>();
 		String phone;
@@ -945,6 +974,16 @@ public class TalentEntryWindow extends JPanel
 				((JCheckBox) input).setSelected(false);
 			else if (input instanceof JLabel)
 				((JLabel) input).setText(" ...");
+			else if (input instanceof JPanel) 
+			{
+				for (Component component : ((JPanel) input).getComponents())
+				{
+					if (component instanceof JComboBox)
+						((JComboBox) input).setSelectedItem(0);
+					else if (component instanceof JSpinner)
+						((JSpinner.NumberEditor) ((JSpinner) component).getEditor()).getTextField().setText("");
+				}
+			}
 		}
 	}
 
@@ -975,7 +1014,7 @@ public class TalentEntryWindow extends JPanel
 
 		public RequiredListener ()
 		{
-			qtyRequired = 6;
+			qtyRequired = 9;
 			wasFilled = false;
 		}
 
@@ -1003,7 +1042,7 @@ public class TalentEntryWindow extends JPanel
     		if (filledCounter < qtyRequired)
     		{
     			btnEnter.setEnabled(false);
-    			btnEnter.setToolTipText("Llene los campos obligatorios para ingresar el proyecto");
+    			btnEnter.setToolTipText("Llene los campos obligatorios para " + ACTION + " el proyecto");
     		}
     		else
     		{
@@ -1019,7 +1058,7 @@ public class TalentEntryWindow extends JPanel
     		if (filledCounter < qtyRequired)
     		{
     			btnEnter.setEnabled(false);
-    			btnEnter.setToolTipText("Llene los campos obligatorios para ingresar el proyecto");
+    			btnEnter.setToolTipText("Llene los campos obligatorios para " + ACTION + " el proyecto");
     		}
     		else
     		{

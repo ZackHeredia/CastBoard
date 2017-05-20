@@ -10,6 +10,13 @@ public class ProjectSetWindow extends SetWindow
 	public ProjectSetWindow ()
 	{
 		super("Proyectos");
+		
+		init();
+	}
+
+	protected void init ()
+	{
+		indexAcum = 0;
 		ProjectSetWindow projectSet = this;
 
 		SwingWorker worker = new SwingWorker<Void, Void>()
