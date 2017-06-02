@@ -13,6 +13,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.awt.Rectangle;
+import java.awt.Robot;
 import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
@@ -54,7 +56,7 @@ public abstract class CatalogsHandler
 		{
 			case FRONT_SET:
 				set = getFrontSet();
-				
+
 				break;
 			case TALENT_SET:
 				set = getTalentSet();
@@ -272,7 +274,7 @@ public abstract class CatalogsHandler
 		{
 			for (int i = 0; i < items.size(); i++)
 			{
-				inner = new ArrayList<String>(); 
+				inner = new ArrayList<String>();
 				thumbnail = (Project) items.get(i);
 
 				inner.add(Long.toString(thumbnail.getId()));
@@ -349,7 +351,7 @@ public abstract class CatalogsHandler
 		{
 			for (int i = 0; i < items.size(); i++)
 			{
-				inner = new ArrayList<String>(); 
+				inner = new ArrayList<String>();
 				criteria = (Project) items.get(i);
 
 				inner.add(Long.toString(criteria.getId()));
@@ -514,7 +516,7 @@ public abstract class CatalogsHandler
 			for (String name : role.getValue())
 			{
 				inner = new ArrayList<String>();
-				
+
 				inner.add(parse(new SimpleEntry<Category, String>(role.getKey(), name)));
 
 				values.add(inner);
@@ -545,12 +547,12 @@ public abstract class CatalogsHandler
 					inner.add(talent.getName());
 					inner.add(parse(talent.getBirthdate()));
 					inner.add(talent.getProfileType().toString());
-					
+
 					values.add(inner);
 				}
 			}
 		}
-		
+
 		return values;
 	}
 	private static ArrayList<ArrayList<String>> getCinemaProject (String id)
@@ -572,7 +574,7 @@ public abstract class CatalogsHandler
 		{
 			for (Sequence thumbnail : cinemaProject.getSequences())
 			{
-				inner = new ArrayList<String>(); 
+				inner = new ArrayList<String>();
 
 				inner.add(Long.toString(thumbnail.getId()));
 				inner.add(Integer.toString(thumbnail.getNumber()));
@@ -613,7 +615,7 @@ public abstract class CatalogsHandler
 		{
 			for (Entry<String, Talent> selected : sequence.getSelecteds().entrySet())
 			{
-				inner = new ArrayList<String>(); 
+				inner = new ArrayList<String>();
 
 				inner.add(selected.getKey());
 
@@ -688,9 +690,9 @@ public abstract class CatalogsHandler
 		addPhotoEntry(talent.getPhotos(), "Rostro", parse(Paths.get(values.get(7).get(0))));
 		if (!values.get(7).get(1).equals(" ..."))
 			addPhotoEntry(talent.getPhotos(), "Medio Cuerpo", parse(Paths.get(values.get(7).get(1))));
-		if (!values.get(7).get(2).equals(" ..."))	
+		if (!values.get(7).get(2).equals(" ..."))
 			addPhotoEntry(talent.getPhotos(), "Cuerpo Completo", parse(Paths.get(values.get(7).get(2))));
-		if (!values.get(7).get(3).equals(" ..."))	
+		if (!values.get(7).get(3).equals(" ..."))
 			talent.getVideos().put("Demo",  parse(Paths.get(values.get(7).get(3))));
 
 		return getInterfaceDAL().enter(talent);
@@ -750,7 +752,7 @@ public abstract class CatalogsHandler
 
 		return getInterfaceDAL().enter(cinema);
 	}
-	
+
 	@Deprecated
 	private static boolean updateTalent (ArrayList<ArrayList<String>> values)
 	{
@@ -869,26 +871,56 @@ public abstract class CatalogsHandler
 				{
 					talent = getInterfaceDAL().retrive(talent);
 
-					dirTalent = Paths.get(dirRole.toString(), (talent.getName() + " " + talent.getSurname() + 
+					dirTalent = Paths.get(dirRole.toString(), (talent.getName() + " " + talent.getSurname() +
 													" - " + parse(talent.getBirthdate())));
 
 					if (Files.notExists(dirTalent))
 						dirTalent = Files.createDirectory(dirTalent);
 
-					for (Entry<String, BufferedImage> photo : talent.getPhotos().entrySet()) 
+					if (!PHOTOS_PATHS.containsKey("Cuerpo Completo" + talent.getId()))
 					{
-						photoPath = Paths.get(dirTalent.toString(), (photo.getKey() + ".jpg"));
-						photoPath = Files.createFile(photoPath);
+						for (Entry<String, BufferedImage> photo : talent.getPhotos().entrySet())
+						{
+							photoPath = Paths.get(dirTalent.toString(), (photo.getKey() + ".jpg"));
+							Files.deleteIfExists(photoPath);
+							photoPath = Files.createFile(photoPath);
 
-						ImageIO.write(photo.getValue(), "jpg", photoPath.toFile());
+							ImageIO.write(photo.getValue(), "jpg", photoPath.toFile());
+						}
 					}
-					
-					for (Entry<String, InputStream> video : talent.getVideos().entrySet()) 
+					else 
 					{
-						videoPath = Paths.get(dirTalent.toString(), (video.getKey() + ".mp4"));
-						videoPath = Files.createFile(videoPath);
+						photoPath = Paths.get(dirTalent.toString(), "Rostro.jpg");
+						
+						Files.copy(Paths.get(PHOTOS_PATHS.get("Rostro" + talent.getId())), photoPath, 
+								   StandardCopyOption.REPLACE_EXISTING);
 
-						Files.copy(video.getValue(), videoPath, StandardCopyOption.REPLACE_EXISTING);
+						photoPath = Paths.get(dirTalent.toString(), "Medio Cuerpo.jpg");
+						
+						Files.copy(Paths.get(PHOTOS_PATHS.get("Medio Cuerpo" + talent.getId())), 
+								   photoPath, StandardCopyOption.REPLACE_EXISTING);
+
+						photoPath = Paths.get(dirTalent.toString(), "Cuerpo Completo.jpg");
+						
+						Files.copy(Paths.get(PHOTOS_PATHS.get("Cuerpo Completo" + talent.getId())), 
+								   photoPath, StandardCopyOption.REPLACE_EXISTING);
+					}
+
+					if (!CatalogsHandler.VIDEOS_PATHS.containsKey("Demo" + talent.getId()))
+					{
+						for (Entry<String, InputStream> video : talent.getVideos().entrySet())
+						{
+							videoPath = Paths.get(dirTalent.toString(), (video.getKey() + ".mp4"));
+
+							Files.copy(video.getValue(), videoPath, StandardCopyOption.REPLACE_EXISTING);
+						}
+					}
+					else
+					{
+						videoPath = Paths.get(dirTalent.toString(), "Demo.mp4");
+
+						Files.copy(Paths.get(VIDEOS_PATHS.get("Demo" + talent.getId())), videoPath, 
+								   StandardCopyOption.REPLACE_EXISTING);
 					}
 				}
 			}
@@ -901,6 +933,34 @@ public abstract class CatalogsHandler
 		}
 
 		return true;
+	}
+
+	public static boolean capture (String title, String number, String dir, Rectangle rec)
+	{
+		Path dirProject;
+		Path capturePath;
+
+		try 
+		{
+			dirProject = Paths.get(dir, title);
+			capturePath = Paths.get(dirProject.toString(), ("Secuencia No " + number + ".png"));
+			Files.deleteIfExists(capturePath);
+			capturePath = Files.createFile(capturePath);
+ 			
+ 			Thread.sleep(1000);
+
+    		BufferedImage capture = (new Robot()).createScreenCapture(rec);
+ 
+        	ImageIO.write(capture, "png", capturePath.toFile());
+    	} 
+    	catch (Exception e) 
+    	{
+        	e.printStackTrace();
+
+        	return false;
+    	}
+
+       return true;
 	}
 
 	public static String[][] getSuppressed ()
@@ -1008,7 +1068,7 @@ public abstract class CatalogsHandler
 	public static TreeMap<String, BufferedImage> parse (String name, InputStream inputStream)
 	{
 		TreeMap<String, BufferedImage> photos = new TreeMap<String, BufferedImage>();
-		
+
 		try
 		{
 			photos.put(name , ImageIO.read(inputStream));
@@ -1030,7 +1090,7 @@ public abstract class CatalogsHandler
 		{
 			for (Entry<String, BufferedImage> photo : photos.entrySet())
 			{
-				if (PHOTOS_PATHS.containsKey(photo.getKey() + id) && 
+				if (PHOTOS_PATHS.containsKey(photo.getKey() + id) &&
 					!Files.notExists(Paths.get(PHOTOS_PATHS.get(photo.getKey() + id))))
 				{
 					photosPath[i] = PHOTOS_PATHS.get(photo.getKey() + id);
@@ -1065,7 +1125,7 @@ public abstract class CatalogsHandler
 		{
 			return parse(Files.readAllBytes(path));
 		}
-		catch (IOException e) 
+		catch (IOException e)
 		{
 			e.printStackTrace();
 
@@ -1082,7 +1142,7 @@ public abstract class CatalogsHandler
 		{
 			for (Entry<String, InputStream> video : videos.entrySet())
 			{
-				if (VIDEOS_PATHS.containsKey(video.getKey() + id) && 
+				if (VIDEOS_PATHS.containsKey(video.getKey() + id) &&
 					!Files.notExists(Paths.get(VIDEOS_PATHS.get(video.getKey() + id))))
 				{
 					videosPath[i] = VIDEOS_PATHS.get(video.getKey() + id);
@@ -1121,7 +1181,7 @@ public abstract class CatalogsHandler
 		String addressPattern = "";
 
 		if (address.get("Calle") != null)
-			addressPattern = addressPattern.concat("C/ %s");	
+			addressPattern = addressPattern.concat("C/ %s");
 		if (address.get("Numero") != null)
 			addressPattern = addressPattern.concat(" #%s");
 		if (address.get("Sector") != null)

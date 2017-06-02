@@ -373,7 +373,10 @@ public class ProjectDetailWindow extends Window
 		if (selected[0]!=null)
 		{
 			if (CatalogsHandler.select(ids[cbbTalent.getSelectedIndex()], id, role))
+			{
 				(new AccomplishmentNotificationPopUp(masterFrame)).display("¡El talento ha sido seleccionado!");
+				reload();
+			}
 			else
 				(new FailureNotificationPopUp(masterFrame)).display("La seleción ha fallado");	
 		}

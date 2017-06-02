@@ -16,6 +16,8 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import javax.swing.SwingWorker;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.Color;
@@ -146,6 +148,7 @@ public class WasteBasketWindow extends Window
 						public void actionPerformed (ActionEvent e)
 						{
 							CatalogsHandler.restore(selectedItemId);
+							reload();
 						}
 					});
 

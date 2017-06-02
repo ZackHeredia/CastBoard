@@ -399,7 +399,7 @@ public class ProjectEntryWindow extends Window
     		else
     		{
     			btnEnter.setEnabled(true);
-    			btnEnter.setToolTipText("Ingresar el proyecto");
+    			btnEnter.setToolTipText(btnEnter.getText() + " el proyecto");
     		}
     	}
 	}

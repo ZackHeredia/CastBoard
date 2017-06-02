@@ -979,7 +979,7 @@ public class TalentEntryWindow extends Window
 				for (Component component : ((JPanel) input).getComponents())
 				{
 					if (component instanceof JComboBox)
-						((JComboBox) input).setSelectedItem(0);
+						((JComboBox) component).setSelectedItem(0);
 					else if (component instanceof JSpinner)
 						((JSpinner.NumberEditor) ((JSpinner) component).getEditor()).getTextField().setText("");
 				}
@@ -1042,12 +1042,12 @@ public class TalentEntryWindow extends Window
     		if (filledCounter < qtyRequired)
     		{
     			btnEnter.setEnabled(false);
-    			btnEnter.setToolTipText("Llene los campos obligatorios para " + ACTION + " el proyecto");
+    			btnEnter.setToolTipText("Llene los campos obligatorios para " + ACTION + " el talento");
     		}
     		else
     		{
     			btnEnter.setEnabled(true);
-    			btnEnter.setToolTipText("Ingresar el proyecto");
+    			btnEnter.setToolTipText("Ingresar el talento");
     		}
     	}
     	private void valid (JTextField input)
@@ -1058,12 +1058,12 @@ public class TalentEntryWindow extends Window
     		if (filledCounter < qtyRequired)
     		{
     			btnEnter.setEnabled(false);
-    			btnEnter.setToolTipText("Llene los campos obligatorios para " + ACTION + " el proyecto");
+    			btnEnter.setToolTipText("Llene los campos obligatorios para " + ACTION + " el talento");
     		}
     		else
     		{
     			btnEnter.setEnabled(true);
-    			btnEnter.setToolTipText("Ingresar el proyecto");
+    			btnEnter.setToolTipText(btnEnter.getText() + " el talento");
     		}
     	}
 	}

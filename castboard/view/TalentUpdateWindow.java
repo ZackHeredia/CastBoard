@@ -39,6 +39,7 @@ public class TalentUpdateWindow extends TalentEntryWindow
 	private void prepareBtnUpdate ()
 	{
 		btnEnter.setText("Actualizar");
+		btnEnter.setToolTipText("Actualizar el talento");
 	}
 
 	private void fillInputs ()

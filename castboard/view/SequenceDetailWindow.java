@@ -10,6 +10,8 @@ import javax.swing.BorderFactory;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.Border;
 import javax.swing.Box;
+import javax.swing.JFileChooser;
+import javax.swing.JButton;
 import java.awt.Dimension;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -80,6 +82,8 @@ public class SequenceDetailWindow extends Window
 	{
 		JLabel lblTitle = new JLabel("<html><h1>" + title + "</h1></html>");
 		JLabel lblNumber = new JLabel("<html><h2>Secuencia No. " + values.get(0).get(0) + "</h2></html>");
+		JButton btnCapture = new JButton("Capturar");
+		JPanel innerHead = new JPanel();
 		
 		pnlHead =new JPanel();
 		pnlHead.setLayout(new BoxLayout(pnlHead, BoxLayout.Y_AXIS));
@@ -87,13 +91,25 @@ public class SequenceDetailWindow extends Window
 		lblTitle.setForeground(new Color(0, 146, 182));
 
 		lblTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
-		lblNumber.setAlignmentX(Component.CENTER_ALIGNMENT);
+		innerHead.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+		btnCapture.addActionListener(new ActionListener()
+		{
+			public void actionPerformed (ActionEvent e)
+			{
+				capture();
+			}
+		});
 
 		lblTitle.setToolTipText("Titulo");
 		lblNumber.setToolTipText("Número");
 
+		innerHead.add(lblNumber);
+		innerHead.add(Box.createHorizontalStrut(32));
+		innerHead.add(btnCapture);
+
 		pnlHead.add(lblTitle);
-		pnlHead.add(lblNumber);
+		pnlHead.add(innerHead);
 	}
 	private void createPnlContent ()
 	{
@@ -266,5 +282,54 @@ public class SequenceDetailWindow extends Window
 			pnlRoleSelection.fillPnlGrid();
 
 		pnlRoles.add(pnlRoleSelection);
+	}
+
+	private void capture ()
+	{
+		JFileChooser fcsDirectory = new JFileChooser();
+		int option;
+
+		fcsDirectory.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+		option = fcsDirectory.showDialog(masterFrame, "Elegir");
+
+		SwingWorker worker = new SwingWorker<Void, Void>()
+		{
+			private boolean wasSuccessful;
+
+			protected Void doInBackground ()
+			{	
+				wasSuccessful = CatalogsHandler.capture(title, values.get(0).get(0), fcsDirectory.getSelectedFile().getAbsolutePath(), masterFrame.getBounds());	
+				
+				return null;
+			}
+
+			protected void done ()
+			{
+				masterFrame.stopWaitingLayer();
+
+				if (wasSuccessful)
+					(new AccomplishmentNotificationPopUp(masterFrame)).display("Secuencia capturada, revise el directorio");
+				else
+					(new FailureNotificationPopUp(masterFrame)).display("Secuencia no lista, intentelo de nuevo");
+			}
+		};
+
+		if (option == JFileChooser.APPROVE_OPTION)
+		{
+			worker.execute();
+
+			try
+			{
+				Thread.sleep(2000);
+			}
+			catch (Exception e) 
+			{
+				e.printStackTrace();
+			}
+			masterFrame.startWaitingLayer();
+		}
+		else
+			(new CancellationNotificationPopUp(masterFrame)).display("Ha cancelado la captura");
 	}
 }

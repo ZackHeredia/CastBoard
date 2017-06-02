@@ -33,6 +33,7 @@ import java.awt.Composite;
 import java.awt.AlphaComposite;
 import java.awt.RenderingHints;
 import java.awt.BasicStroke;
+import java.awt.Desktop;
 import javax.swing.BorderFactory;
 import javax.swing.JLayer;
 import javax.swing.plaf.LayerUI;
@@ -48,6 +49,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.beans.PropertyChangeEvent;
 import javafx.application.Platform;
+import java.io.File;
+import java.io.IOException;
 
 public class MasterFrame extends JFrame
 {
@@ -76,7 +79,7 @@ public class MasterFrame extends JFrame
 		createTlbNavigation();
 		createPnlBody();
 		createPnlWrapper();
-		
+
 		isConnected = false;
 
 		ImageIcon icon = new ImageIcon("castboard/res/icons/ico_128_cb.png");
@@ -113,6 +116,7 @@ public class MasterFrame extends JFrame
 		JMenu mnEntry = new JMenu("Ingreso");
 		JMenu mnSearch = new JMenu("Búsqueda");
 		JMenu mnBin = new JMenu("Papelera");
+		JMenu mnHelp = new JMenu("Ayuda");
 		JMenu mnLog = new JMenu("Iniciar Sesión");
 		JMenuItem mniTalentEntry = new JMenuItem("Talento");
 		JMenuItem mniProjectEntry = new JMenuItem("Proyecto");
@@ -120,16 +124,17 @@ public class MasterFrame extends JFrame
 		JMenuItem mniProjectSearch = new JMenuItem("Proyecto");
 
 		mnbActions = new JMenuBar();
-		
+
 		mnEntry.setToolTipText("Menú de ingreso");
 		mnSearch.setToolTipText("Menú de búsqueda");
 		mnBin.setToolTipText("Papelera de eliminados");
+		mnHelp.setToolTipText("Manual de usuario");
 		mnLog.setToolTipText("Inicio de sesión");
 		mniTalentEntry.setToolTipText("Ingreso de talento");
 		mniProjectEntry.setToolTipText("Ingreso de proyecto");
 		mniTalentSearch.setToolTipText("Búsqueda de talento");
 		mniProjectSearch.setToolTipText("Búsqueda de proyecto");
-		
+
 		mnBin.addMenuListener(new MenuListener()
 		{
 			public void menuSelected (MenuEvent e)
@@ -178,7 +183,7 @@ public class MasterFrame extends JFrame
 						(new CautionPopUp(getInstance())).display("Ya se encuentra en el ingreso de " +
 																  "talento");
 					else
-						(new CautionPopUp(getInstance())).display("Regrese al ingreso de talento " + 
+						(new CautionPopUp(getInstance())).display("Regrese al ingreso de talento " +
 																  "mediante la barra de navegación");
 				}
 				else
@@ -213,7 +218,7 @@ public class MasterFrame extends JFrame
 																  "mediante la barra de navegación");
 				}
 				else
-					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder al " + 
+					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder al " +
 														   "ingreso");
 			}
 		});
@@ -240,7 +245,7 @@ public class MasterFrame extends JFrame
 						(new CautionPopUp(getInstance())).display("Ya se encuentra en la búsqueda de " +
 																  "talentos");
 					else
-						(new CautionPopUp(getInstance())).display("Regrese a la búsqueda de talentos " + 
+						(new CautionPopUp(getInstance())).display("Regrese a la búsqueda de talentos " +
 																  "mediante la barra de navegación");
 				}
 				else
@@ -275,9 +280,29 @@ public class MasterFrame extends JFrame
 																  "mediante la barra de navegación");
 				}
 				else
-					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder a la " + 
+					(new CautionPopUp(getInstance())).display("Debe iniciar sesión para acceder a la " +
 														   "búsqueda");
 			}
+		});
+		mnHelp.addMenuListener(new MenuListener()
+		{
+			public void menuSelected (MenuEvent e)
+			{
+				if (Desktop.isDesktopSupported())
+				{
+				    try
+					{
+				        File myFile = new File("castboard/res/documents/user_manual.pdf");
+				        Desktop.getDesktop().open(myFile);
+				    }
+					catch (IOException ex)
+					{
+				        ex.printStackTrace();
+				 	}
+				}
+			}
+			public void menuDeselected (MenuEvent e) {}
+			public void menuCanceled (MenuEvent e) {}
 		});
 		//TODO: set mnemonics and listeners
 
@@ -285,11 +310,12 @@ public class MasterFrame extends JFrame
 		mnEntry.add(mniProjectEntry);
 		mnSearch.add(mniTalentSearch);
 		mnSearch.add(mniProjectSearch);
-		
+
 		mnbActions.add(mnEntry);
 		mnbActions.add(mnSearch);
 		mnbActions.add(mnBin);
 		mnbActions.add(Box.createHorizontalGlue());
+		mnbActions.add(mnHelp);
 		mnbActions.add(mnLog);
 	}
 	private void createTlbNavigation ()
@@ -311,7 +337,7 @@ public class MasterFrame extends JFrame
 	{
 		pnlWrapper = new JPanel();
 		pnlWrapper.setLayout(new BorderLayout());
-		
+
 		pnlWrapper.add(mnbActions, BorderLayout.PAGE_START);
 		pnlWrapper.add(lyrBody, BorderLayout.CENTER);
 		pnlWrapper.add(tlbNavigation, BorderLayout.PAGE_END);
@@ -713,7 +739,7 @@ public class MasterFrame extends JFrame
 	{
 		(new ExceptionPopUp(this)).display(message);
 	}
-	
+
 	public void pushLblLink (String link)
 	{
 		JLabel lblLink = new JLabel(" \u25B8" + link);
@@ -771,7 +797,7 @@ public class MasterFrame extends JFrame
 						lblLink.setForeground(new Color(0, 146, 182));
 				}
 			});
-			
+
 			if (!(links.isEmpty()))
 				styleLink(links.get(links.size() - 1));
 
@@ -854,31 +880,31 @@ public class MasterFrame extends JFrame
 
 		unstyleLink(links.get(links.size()-1));
 	}
-	
+
 	public void logIn()
 	{
 		isConnected = true;
-		mnbActions.getMenu(4).setText("Cerrar sesión");
+		mnbActions.getMenu(5).setText("Cerrar sesión");
 		displayFront();
 	}
 	public void logOut()
 	{
-		boolean isConfirmed = (new ConfirmationPopUp(getInstance())).display("Se cerrará la sesión " +
-																			", el trabajo sin guardar" +
-																			" se perderá");
+		boolean isConfirmed = (new ConfirmationPopUp(getInstance())).display("Se cerrará la sesión," +
+																			 " el trabajo sin guardar" +
+																			 " se perderá");
 
 		if (isConfirmed)
 		{
 			CatalogsHandler.disconnect();
 			isConnected = false;
-			mnbActions.getMenu(4).setText("Iniciar sesión");
+			mnbActions.getMenu(5).setText("Iniciar sesión");
 			this.setTitle("CastBoard");
 			displayBlank();
 			(new SuccessNotificationPopUp(this)).display("¡La sesión ha sido cerrada!");
 			displayLogin();
 		}
 	}
-	
+
 	public void setIsConnected (boolean isConnected)
 	{
 		this.isConnected = isConnected;
@@ -1099,7 +1125,7 @@ public class MasterFrame extends JFrame
 			list.add(location, BorderLayout.CENTER);
 			list.add(scriptPage, BorderLayout.SOUTH);
 
-			thumbnail.setToolTipText("Ver detalle de la sequencia");
+			thumbnail.setToolTipText("Ver detalle de la secuencia");
 			number.setToolTipText("Número");
 			filmingDate.setToolTipText("Fecha de rodaje");
 			location.setToolTipText("Locación");
@@ -1167,12 +1193,12 @@ public class MasterFrame extends JFrame
 	{
 		if (isConnected)
 		{
-			boolean isConfirmed = (new ConfirmationPopUp(getInstance())).display("Se cerrará la aplicación " +
-																					", el trabajo sin guardar" +
+			boolean isConfirmed = (new ConfirmationPopUp(getInstance())).display("Se cerrará la aplicación," +
+																					" el trabajo sin guardar" +
 																					" se perderá");
-		
+
 			if (isConfirmed)
-			{	
+			{
 				CatalogsHandler.disconnect();
 				Platform.exit();
 				getInstance().dispose();
@@ -1292,8 +1318,8 @@ public class MasterFrame extends JFrame
 	    if (mIsRunning) {
 	      return;
 	    }
-	    
-	    // Run a thread for animation.		
+
+	    // Run a thread for animation.
 	    mIsRunning = true;
 	    mIsFadingOut = false;
 	    mFadeCount = 0;

@@ -31,6 +31,7 @@ public class ProjectUpdateWindow extends ProjectEntryWindow
 	private void prepareBtnUpdate ()
 	{
 		super.btnEnter.setText("Actualizar");
+    			btnEnter.setToolTipText("Actualizar el proyecto");
 	}
 
 	private void fillInputs ()

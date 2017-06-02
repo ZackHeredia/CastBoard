@@ -57,6 +57,7 @@ import javafx.scene.Scene;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
+import java.net.URLEncoder;
 
 public class TalentDetailWindow extends Window
 {
@@ -95,11 +96,11 @@ public class TalentDetailWindow extends Window
 	protected void init ()
 	{
 		TalentDetailWindow detail = this;
-		
+
 		SwingWorker worker = new SwingWorker<Void, Void>()
 		{
 			protected Void doInBackground ()
-			{	
+			{
 				values = CatalogsHandler.get(id, CatalogsHandler.TALENT_SET);
 
 				try
@@ -111,7 +112,7 @@ public class TalentDetailWindow extends Window
 					e.printStackTrace();
 				}
 				createPnlBottom();
-				
+
 				return null;
 			}
 
@@ -143,11 +144,11 @@ public class TalentDetailWindow extends Window
 		JLabel lblFullPhoto = new JLabel(masterFrame.scale(new ImageIcon(values.get(0).get(2)), 160,160));
 		JLabel lblVideo = new JLabel(new ImageIcon("castboard/res/thumbnails/vdo_160_cb.png"));
 		JButton btnUpdate = new JButton("Actualizar");
-		JButton btnDelete = new JButton("Elimnar");
+		JButton btnDelete = new JButton("Eliminar");
 		JButton btnPreselect = new JButton("Preseleccionar");
 		JButton btnSwitch = new JButton("Cambiar estatus");
 
-		pnlLargeVideo = new MediaPanel("file://" + values.get(0).get(3));
+		pnlLargeVideo = new MediaPanel(values.get(0).get(3));
 
 		largesMedia = new ArrayList<String>();
 		media = new ArrayList<JLabel>();
@@ -250,7 +251,7 @@ public class TalentDetailWindow extends Window
 		pnlMedia.add(lblMidPhoto);
 		pnlMedia.add(lblFullPhoto);
 		pnlMedia.add(lblVideo);
-		
+
 		pnlActions.add(btnUpdate);
 		pnlActions.add(btnDelete);
 		pnlActions.add(btnPreselect);
@@ -269,7 +270,7 @@ public class TalentDetailWindow extends Window
 
 		pnlTop.add(pnlLargerMedia);
 		pnlTop.add(pnlInnerTop);
-		
+
 		lytCard.show(pnlLargerMedia, "Rostro");
 		currentLargeMedia = 0;
 	}
@@ -289,16 +290,16 @@ public class TalentDetailWindow extends Window
 		JPanel pnlBottomAptitudes = new JPanel();
 		JLabel lblSkills = new JLabel("<html>Habilidades: <small>" + values.get(5).get(0) + "</small></html>");
 		JLabel lblLanguages = new JLabel("<html>Idiomas: <small>" + values.get(5).get(1) + "</small></html>");
-		JLabel lblAcademicLevel = new JLabel("<html>Nivel Académico: <small>" + values.get(5).get(2) + 
+		JLabel lblAcademicLevel = new JLabel("<html>Nivel Académico: <small>" + values.get(5).get(2) +
 											 "</small></html>");
 		String[] generals = {"Nombre", "Edad", "Sexo"};
-		String[] profile = {"Tipo", "Estatura", "Complexión", "Tono de piel", "Textura de pelo", 
+		String[] profile = {"Tipo", "Estatura", "Complexión", "Tono de piel", "Textura de pelo",
 							"Color de pelo", "Color de ojos"};
 		String[] measures = {"Talla de camisa", "Talla de pantalón", "Talla de zapatos"};
 		String[] leftContact = {"Teléfono móvil", "Facebook", "Twitter", "Email", "Domicilio"};
 		String[] rightContact = {"Teléfono fijo", "Instagram", "Estatus", "Ciudad"};
 		String[] bottomAptitudes = {"Experiencia artística", "Horario disponible", "Pasatiempos"};
-		
+
 		pnlBottom = new JPanel();
 		pnlBottom.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -307,7 +308,7 @@ public class TalentDetailWindow extends Window
 
 		pnlInnerRightBottom.setLayout(new BoxLayout(pnlInnerRightBottom, BoxLayout.Y_AXIS));
 		pnlInnerRightBottom.setPreferredSize(new Dimension(644, 424));
-	
+
 		pnlContact.setLayout(new GridLayout(1, 2));
 		pnlContact.setBorder(BorderFactory.createTitledBorder(etched, "Contacto"));
 
@@ -344,7 +345,7 @@ public class TalentDetailWindow extends Window
 		pnlInnerRightBottom.add(pnlAptitudes);
 
 		pnlBottom.add(pnlInnerLeftBottom);
-		pnlBottom.add(pnlInnerRightBottom);	
+		pnlBottom.add(pnlInnerRightBottom);
 	}
 
 	private void prepareField (JPanel pnlField, String title, String[] fields, ArrayList<String> values)
@@ -384,7 +385,7 @@ public class TalentDetailWindow extends Window
 			((MediaPanel) pnlLargerMedia.getComponents()[3]).stop();
 
 		pnlMedia.add(media.get(currentLargeMedia), ((mediaIndex == 0) ? 0 : (mediaIndex - 1)));
-		currentLargeMedia = mediaIndex;			
+		currentLargeMedia = mediaIndex;
 
 		pnlLargerMedia.revalidate();
 		pnlMedia.revalidate();
@@ -471,7 +472,7 @@ public class TalentDetailWindow extends Window
 
 				cbbProject.setToolTipText("Seleccionar el proyecto");
 				cbbRole.setToolTipText("Seleccionar el rol");
-				
+
 				cbbProject.addItemListener(new ItemListener()
 				{
 					public void itemStateChanged (ItemEvent e)
@@ -584,15 +585,24 @@ public class TalentDetailWindow extends Window
 			Platform.setImplicitExit(false);
 			MediaPanel panel = this;
 
-			Platform.runLater(new Runnable() 
+			Platform.runLater(new Runnable()
 			{
-		        public void run() 
+		        public void run()
 		        {
 					Group root = new Group();
 			        Scene scene = new Scene(root, 344, 344);
+			        Media media = null;
 
 			        // create media player
-			        Media media = new Media(MEDIA_URL);
+					try
+					{
+			        	media = new Media("file:/" + URLEncoder.encode(MEDIA_URL, "UTF-8"));
+			    	}
+			    	catch (Exception e) 
+			    	{
+			    		e.printStackTrace();	
+			    	}
+
 			        MediaPlayer mediaPlayer = new MediaPlayer(media);
 			        mediaPlayer.setAutoPlay(false);
 			        mediaControl = new MediaControl(mediaPlayer);
@@ -612,7 +622,7 @@ public class TalentDetailWindow extends Window
 	   		mediaControl.pause();
 	   	}
 
-	    private class MediaControl extends BorderPane 
+	    private class MediaControl extends BorderPane
 		{
 		    private MediaPlayer mediaPlayer;
 		    private MediaView mediaView;
@@ -625,7 +635,7 @@ public class TalentDetailWindow extends Window
 		    private Slider volumeSlider;
 		    private HBox mediaBar;
 
-		    public MediaControl(final MediaPlayer mp) 
+		    public MediaControl(final MediaPlayer mp)
 		    {
 		        this.mediaPlayer = mp;
 
@@ -784,7 +794,7 @@ public class TalentDetailWindow extends Window
 		            });
 		        }
 		    }
-		    
+
 		    private String formatTime(Duration elapsed, Duration duration) {
 		        int intElapsed = (int) Math.floor(elapsed.toSeconds());
 		        int elapsedHours = intElapsed / (60 * 60);
@@ -835,7 +845,7 @@ public class TalentDetailWindow extends Window
 
 		 	private void scale (double width, double height)
 			{
-		        if(mediaView.getFitWidth() >= mediaView.getFitHeight())  
+		        if(mediaView.getFitWidth() >= mediaView.getFitHeight())
 		        	mediaView.setFitWidth(width);
 		        else
 		        	mediaView.setFitHeight(height);
