@@ -11,7 +11,7 @@ public class ConfirmationPopUp extends PopUp
 	public ConfirmationPopUp (JFrame frmParent)
 	{
 		super(frmParent, "Confirmación - CastBoard", JOptionPane.YES_NO_OPTION, 
-			  (new ImageIcon("castboard/res/icons/qst_64_cb.png")));
+			  "castboard/res/icons/qst_64_cb.png");
 	}
 
 	public boolean display (String message)

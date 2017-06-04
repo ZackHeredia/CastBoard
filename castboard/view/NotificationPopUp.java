@@ -6,7 +6,7 @@ import javax.swing.ImageIcon;
 
 public abstract class NotificationPopUp extends PopUp
 {	
-	public NotificationPopUp (JFrame frmParent, ImageIcon icon)
+	public NotificationPopUp (JFrame frmParent, String icon)
 	{
 		super(frmParent, "Notificación - CastBoard", JOptionPane.DEFAULT_OPTION, icon);
 	}

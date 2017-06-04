@@ -21,7 +21,7 @@ public class LoginPopUp extends PopUp
 	public LoginPopUp(JFrame frmParent)
 	{
 		super(frmParent, "Inicio de sesión - CastBoard", JOptionPane.OK_CANCEL_OPTION, 
-			  (new ImageIcon("castboard/res/icons/ico_64_cb.png")));
+			  "castboard/res/icons/ico_64_cb.png");
 		
 		createPnlForm();
 	}

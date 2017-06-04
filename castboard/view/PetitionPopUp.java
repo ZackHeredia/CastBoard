@@ -17,7 +17,7 @@ public class PetitionPopUp extends PopUp
 	public PetitionPopUp (JFrame frmParent)
 	{
 		super(frmParent, "Petición - CastBoard", JOptionPane.OK_CANCEL_OPTION, 
-			  (new ImageIcon("castboard/res/icons/bln_64_cb.png")));
+			  "castboard/res/icons/bln_64_cb.png");
 	}
 
 	public String[] display (JPanel pnlForm)

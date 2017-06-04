@@ -34,6 +34,8 @@ import java.awt.AlphaComposite;
 import java.awt.RenderingHints;
 import java.awt.BasicStroke;
 import java.awt.Desktop;
+import java.awt.Toolkit;
+import java.awt.Image;
 import javax.swing.BorderFactory;
 import javax.swing.JLayer;
 import javax.swing.plaf.LayerUI;
@@ -43,14 +45,17 @@ import java.awt.font.TextAttribute;
 import java.awt.Component;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Image;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.beans.PropertyChangeEvent;
 import javafx.application.Platform;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.net.URL;
 
 public class MasterFrame extends JFrame
 {
@@ -66,11 +71,17 @@ public class MasterFrame extends JFrame
 	private ArrayList<JLabel> links;
 	private ArrayList<Window> windows;
 
+	private Path manualPath;
+
 	private static MasterFrame instance = null;
 
 	private MasterFrame ()
 	{
 		super("CastBoard");
+
+		Toolkit tk = Toolkit.getDefaultToolkit();
+		URL url = getClass().getClassLoader().getResource("castboard/res/icons/ico_128_cb.png");
+		Image icon = tk.getImage(url);
 
 		links = new ArrayList<JLabel>();
 		windows = new ArrayList<Window>();
@@ -82,9 +93,7 @@ public class MasterFrame extends JFrame
 
 		isConnected = false;
 
-		ImageIcon icon = new ImageIcon("castboard/res/icons/ico_128_cb.png");
-
-		this.setIconImage(icon.getImage());
+		this.setIconImage(icon);
 		this.setSize(800, 640);
 		this.add(pnlWrapper);
 		this.addWindowListener(new WindowAdapter()
@@ -122,6 +131,21 @@ public class MasterFrame extends JFrame
 		JMenuItem mniProjectEntry = new JMenuItem("Proyecto");
 		JMenuItem mniTalentSearch = new JMenuItem("Talento");
 		JMenuItem mniProjectSearch = new JMenuItem("Proyecto");
+		InputStream manualStream; 
+
+		try
+		{
+			manualStream = getClass().getClassLoader().getResourceAsStream("castboard/res/documents/user_manual.pdf");
+
+			manualPath = Files.createTempFile("Manual de Usuario - Castboard ", ".pdf");
+			manualPath.toFile().deleteOnExit();
+
+			Files.copy(manualStream, manualPath, StandardCopyOption.REPLACE_EXISTING);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 
 		mnbActions = new JMenuBar();
 
@@ -292,8 +316,7 @@ public class MasterFrame extends JFrame
 				{
 				    try
 					{
-				        File myFile = new File("castboard/res/documents/user_manual.pdf");
-				        Desktop.getDesktop().open(myFile);
+				        Desktop.getDesktop().open(manualPath.toFile());
 				    }
 					catch (IOException ex)
 					{
@@ -1125,7 +1148,7 @@ public class MasterFrame extends JFrame
 			list.add(location, BorderLayout.CENTER);
 			list.add(scriptPage, BorderLayout.SOUTH);
 
-			thumbnail.setToolTipText("Ver detalle de la secuencia");
+			thumbnail.setToolTipText("Ver detalle de la sequencia");
 			number.setToolTipText("Número");
 			filmingDate.setToolTipText("Fecha de rodaje");
 			location.setToolTipText("Locación");

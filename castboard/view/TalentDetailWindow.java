@@ -28,6 +28,7 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.Color;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.awt.Graphics2D;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import java.net.URLEncoder;
+import java.net.URL;
 
 public class TalentDetailWindow extends Window
 {
@@ -142,11 +144,16 @@ public class TalentDetailWindow extends Window
 		JLabel lblFacePhoto = new JLabel (masterFrame.scale(new ImageIcon(values.get(0).get(0)), 160, 160));
 		JLabel lblMidPhoto = new JLabel(masterFrame.scale(new ImageIcon(values.get(0).get(1)), 160,160));
 		JLabel lblFullPhoto = new JLabel(masterFrame.scale(new ImageIcon(values.get(0).get(2)), 160,160));
-		JLabel lblVideo = new JLabel(new ImageIcon("castboard/res/thumbnails/vdo_160_cb.png"));
 		JButton btnUpdate = new JButton("Actualizar");
 		JButton btnDelete = new JButton("Eliminar");
 		JButton btnPreselect = new JButton("Preseleccionar");
 		JButton btnSwitch = new JButton("Cambiar estatus");
+
+		Toolkit tk = Toolkit.getDefaultToolkit();
+		URL url = getClass().getClassLoader().getResource("castboard/res/thumbnails/vdo_160_cb.png");
+		Image img = tk.getImage(url);
+
+		JLabel lblVideo = new JLabel(new ImageIcon(img));
 
 		pnlLargeVideo = new MediaPanel(values.get(0).get(3));
 

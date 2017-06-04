@@ -146,8 +146,8 @@ public class SequenceDetailWindow extends Window
 		prepareField(pnlGenerals, "Generales", description, descriptionValue);
 		pnlGenerals.add(pnlInnerGenerals);
 
-		pnlGenerals.setPreferredSize(new Dimension(644, 64));
-		pnlScript.setPreferredSize(new Dimension(344, 64));
+		pnlGenerals.setPreferredSize(new Dimension(644, 68));
+		pnlScript.setPreferredSize(new Dimension(344, 68));
 
 		pnlContent.add(pnlGenerals);
 		pnlContent.add(pnlScript);
