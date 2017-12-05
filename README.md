@@ -20,8 +20,7 @@ University project which is a system for managing talents and projects in a cast
 yes, we are learning tho!.
 
 ## Credits
-Created by [Nelson Minaya][nelson-profile].  
-Readme created by [Luis Peña][luis-profile].
+Readme created by [Nelson Minaya][nelson-profile].
 
 ## License
 
