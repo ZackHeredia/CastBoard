@@ -24,7 +24,7 @@ Readme created by [Nelson Minaya][nelson-profile].
 
 ## License
 
-	Copyright 2017 Nelson Minaya
+	Copyright 2017 ZackHeredia
 	
 	Licensed under the Apache License, Version 2.0 (the "License");
 	you may not use this file except in compliance with the License.
@@ -37,6 +37,3 @@ Readme created by [Nelson Minaya][nelson-profile].
 	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 	See the License for the specific language governing permissions and
 	limitations under the License.
-
-[nelson-profile]: https://github.com/nminaya/
-[luis-profile]: https://github.com/luisf11/
